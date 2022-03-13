@@ -1,0 +1,19 @@
+none,nil,0412341
+-1000
++1000
+(){}[],:;&|! == !=<><=>=*/%+-^= ===
+char del do else end fun if int new then typ var void where while
+TestIdentifier _2testIdentifier
+#{
+To je komentar, ki naj se ne izpise
+#{ To je gnezden komentar, ki naj se tudi ne izpise }#
+}#
+
+#{ keksi }}}}# VmesniID #{ tule je zlo pomembno da se vmesniId ispiše z zamikom }}#
+
+#{
+
+}
+Nezaključen komentar, vseeno naj se ne izpise
+$~`@
+če pa dobimo kak izpis za nezaključen komentar pa nič narobe

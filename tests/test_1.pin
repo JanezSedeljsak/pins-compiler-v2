@@ -1,0 +1,11 @@
+var b:int;
+
+fun main():int = {
+    if (b > 5): then {
+        b = 1;
+    }
+                                
+    b;
+    };
+
+main    ();
