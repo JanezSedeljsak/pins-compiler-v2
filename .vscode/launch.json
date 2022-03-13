@@ -10,7 +10,7 @@
             "request": "launch",
             "mainClass": "pins/pins.Compiler",
             "projectName": "src_fc0e0df4",
-            "args": "./tests/test_5.pin"
+            "args": "./tests/test_3.pin"
         }
     ]
 }

@@ -80,6 +80,8 @@ public class LexAn implements AutoCloseable {
 			} else if (currChar == '\n') {
 				row++;
 				col = 0;
+			} else if (currChar == '\t') {
+				col = ((col / TAB_SIZE) + 1) * TAB_SIZE;
 			}
 
 			if (commentDepth == 0) break;
