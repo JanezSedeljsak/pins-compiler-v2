@@ -18,6 +18,7 @@ public class LexAn implements AutoCloseable {
 	private int row = 1;
 	private int col = 0;
 
+	private boolean isNextRow = false; // used for newline handling 
 	private Queue<Character> unseen = new LinkedList<>();
 	
 	public LexAn(String srcFileName) {
@@ -67,11 +68,15 @@ public class LexAn implements AutoCloseable {
 		}
 
 		while ((currChar = getNextCharacter()) != (char)-1) {
-			if (currChar == '#' && getNextCharacter() == '{') commentDepth++;
-			else if (currChar == '}') {
-				char next;
+			char next;
 
-				// handle eg. '#{  this is a comment }}}}}}#'
+			if (currChar == '#') {
+				while ((next = getNextCharacter()) == '#') {}
+				if (next == '{') {
+					commentDepth++;
+				}
+
+			} else if (currChar == '}') {
 				while ((next = getNextCharacter()) == '}') {}
 				if (next == '#') {
 					commentDepth--;
@@ -82,6 +87,9 @@ public class LexAn implements AutoCloseable {
 				col = 0;
 			} else if (currChar == '\t') {
 				col = ((col / TAB_SIZE) + 1) * TAB_SIZE;
+			} else if (currChar == '\r' && getNextCharacter() == '\n') {
+				row++;
+				col = 0;
 			}
 
 			if (commentDepth == 0) break;
@@ -100,12 +108,17 @@ public class LexAn implements AutoCloseable {
 		boolean eofFlag = false, notWhiteSpaceFlag = false, noMathFlag = false;
 		int len;
 		char current;
-		
+
 		// inner loop breaks out everytime we see a whitespace, however, that does not mean we found a valid symbol
 		// this is why we break out to the outer loop and run until we find a valid next symbol 
 		while (true) {
-			while (true) {
+			if (isNextRow) {
+				col = 0;
+				row++;
+				isNextRow = false;
+			}
 
+			while (true) {
 				// read next character and set flags
 				current = getNextCharacter();
 				eofFlag = isEOF(current);
@@ -118,8 +131,14 @@ public class LexAn implements AutoCloseable {
 				// handle eof and newline
 				if (eofFlag) break;
 				if (current == '\n') {
-					row++;
-					col = 0;
+					isNextRow = true;
+					break;
+				}
+
+				if (current == '\r' && getNextCharacter() == '\n') {
+					isNextRow = true;
+					col--;
+					break;
 				}
 
 				// handle tab
