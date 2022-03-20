@@ -1,0 +1,17 @@
+static fun Metoda()
+{
+	int a = -44444;
+	int b=33;
+	read();
+	
+	for (int i = 0; i < 5; i++)
+	{
+		a = i;
+	}
+	
+	for (int i=0;i<=5;i++)
+	{
+		a = i;
+	}
+	
+}
