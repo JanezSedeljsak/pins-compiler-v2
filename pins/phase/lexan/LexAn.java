@@ -64,7 +64,7 @@ public class LexAn implements AutoCloseable {
 		int commentDepth = 1;
 		char currChar = getNextCharacter();
 		if (currChar != '{') {
-			throw new Error(String.format("Invalid start of comment #%c", currChar));
+			throw new Report.Error(new Location(row, col), String.format("Invalid start of comment #%c", currChar));
 		}
 
 		while ((currChar = getNextCharacter()) != (char)-1) {
