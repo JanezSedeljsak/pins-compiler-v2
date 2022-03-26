@@ -7,31 +7,45 @@ import pins.common.report.*;
 public class SynAn implements AutoCloseable {
 
 	private final LexAn lexan;
-	private Symbol currSymb = null;
+	private Symbol currSymb = null, prevSymb = null;
 	private SynNode syntree;
+	private boolean dontMove = false; 
 
 	public SynAn(LexAn lexan) {
 		this.lexan = lexan;
 	}
-	
+
 	public void close() {
 		lexan.close();
 	}
-	
+
 	public void parser() {
 		parseSource();
-		if (currSymb.token != Token.EOF) {
-			throw new Report.Error(currSymb, "Unexpected '" + currSymb + "' at the end of a program.");
+		if (peek().token != Token.EOF) {
+			throw new Report.Error(peek(), "Unexpected '" + peek() + "' at the end of a program.");
+		}
+	}
+
+	public Symbol peek() {
+		return currSymb;
+	}
+
+	public void move() {
+		if (dontMove) {
+			dontMove = false;
+		} else {
+			prevSymb = peek();
+			currSymb = lexan.lexer();
 		}
 	}
 
 	private void addExpected(SynNode node, Token token) {
-		Symbol prev = currSymb;
-		currSymb = lexan.lexer();
-		if (currSymb.token.equals(token)) {
-			node.data.add(new SynNode(currSymb));
-		}  else {
-			throw new Report.Error(String.format("Unexpected token: %s after: %s", currSymb.lexeme, prev.lexeme));
+		move();
+		if (peek().token.equals(token)) {
+			node.addNodeSymbol(peek());
+		} else {
+			String err = String.format("Unexpected token: %s after: %s - in %s", peek().lexeme, prevSymb.lexeme, node.ruleName);
+			throw new Report.Error(peek().location, err);
 		}
 	}
 
@@ -46,33 +60,36 @@ public class SynAn implements AutoCloseable {
 
 	private void parseDecl() {
 		SynNode declNode = new SynNode("DECL");
-		currSymb = lexan.lexer();
-		switch (currSymb.token) {
+		move();
+		switch (peek().token) {
 			case EOF:
 				return;
 			case TYP:
-				declNode.addNode(new SynNode(currSymb));
+				declNode.addNodeSymbol(peek());
 				addExpected(declNode, Token.IDENTIFIER);
 				addExpected(declNode, Token.ASSIGN);
 				parseType(declNode);
 				addExpected(declNode, Token.SEMICOLON);
 				break;
 			case VAR:
-				declNode.addNode(new SynNode(currSymb));
+				declNode.addNodeSymbol(peek());
 				addExpected(declNode, Token.IDENTIFIER);
 				addExpected(declNode, Token.COLON);
 				parseType(declNode);
 				addExpected(declNode, Token.SEMICOLON);
 				break;
 			case FUN:
-				declNode.addNode(new SynNode(currSymb));
+				declNode.addNodeSymbol(peek());
 				addExpected(declNode, Token.IDENTIFIER);
 				addExpected(declNode, Token.LEFT_PARENTHESIS);
+				parseParams(declNode);
 				addExpected(declNode, Token.RIGHT_PARENTHESIS);
-				addExpected(declNode, Token.SEMICOLON);
+				addExpected(declNode, Token.COLON);
+				parseType(declNode);
+				addExpected(declNode, Token.ASSIGN);
 				break;
 			default:
-				throw new Report.Error("Unexpected token");
+				throw new Report.Error(peek().location, String.format("Unexpected token at start of DECL: %s", peek().lexeme));
 		}
 
 		Report.info(declNode.toString());
@@ -82,30 +99,81 @@ public class SynAn implements AutoCloseable {
 
 	private void parseType(SynNode parentNode) {
 		SynNode typeNode = new SynNode("TYPE");
-		currSymb = lexan.lexer();
-		switch (currSymb.token) {
+		move();
+		switch (peek().token) {
 			case VOID:
 			case CHAR:
 			case INT:
 			case IDENTIFIER:
-				typeNode.addNode(new SynNode(currSymb));
+				typeNode.addNodeSymbol(peek());
 				break;
 			case LEFT_BRACKET:
 				break;
-			case POW:
-				typeNode.addNode(new SynNode(currSymb));
+			case POINTER:
+				typeNode.addNodeSymbol(peek());
 				parseType(typeNode);
 				break;
 			case LEFT_PARENTHESIS:
-				typeNode.addNode(new SynNode(currSymb));
+				typeNode.addNodeSymbol(peek());
 				parseType(typeNode);
 				addExpected(typeNode, Token.RIGHT_PARENTHESIS);
 				break;
 			default:
-				throw new Report.Error("Unexpected token");
+				throw new Report.Error(peek().location, String.format("Unexpected token at start of TYPE: %s", peek().lexeme));
 		}
 
 		parentNode.addNode(typeNode);
 		Report.info(typeNode.toString());
+	}
+
+	private void parseParams(SynNode parentNode) {
+		SynNode paramsNode = new SynNode("PARAMS");
+		move();
+		switch (peek().token) {
+			case IDENTIFIER:
+				paramsNode.addNodeSymbol(peek());
+				addExpected(paramsNode, Token.COLON);
+				parseType(paramsNode);
+				parseOptionalParams(paramsNode);
+				break;
+			default:
+				dontMove = true;
+		}
+
+		parentNode.addNode(paramsNode);
+		Report.info(paramsNode.toString());
+	}
+
+	private void parseOptionalParams(SynNode parentNode) {
+		SynNode paramNode = new SynNode("OPTIONAL_PARAMS");
+		move();
+		switch (peek().token) {
+			case COMMA:
+				paramNode.addNodeSymbol(peek());
+				addExpected(paramNode, Token.IDENTIFIER);
+				addExpected(paramNode, Token.COLON);
+				parseType(paramNode);
+				parseOptionalParams(paramNode);
+				break;
+			default:
+				dontMove = true;
+		}
+
+		parentNode.addNode(paramNode);
+		Report.info(paramNode.toString());
+	}
+
+	private void parseExpr(SynNode parentNode) {
+		SynNode exprNode = new SynNode("EXPR");
+		move();
+		switch (peek().token) {
+			case INT:
+				break;
+			default:
+				throw new Report.Error(peek().location, String.format("Unexpected token at start of TYPE: %s", peek().lexeme));
+		}
+
+		parentNode.addNode(exprNode);
+		Report.info(exprNode.toString());
 	}
 }

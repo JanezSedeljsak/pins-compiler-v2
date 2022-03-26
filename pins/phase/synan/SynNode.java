@@ -24,19 +24,28 @@ public class SynNode {
         this.data.add(node);
     }
 
+    public void addNodeSymbol(Symbol symbol) {
+        this.addNode(new SynNode(symbol));
+    }
+
     public String toString() {
         StringBuilder sb = new StringBuilder(String.format("%s => ", ruleName));
         String seperator = "";
-        for (SynNode node: data) {
+        if (data.isEmpty()) {
+            sb.append(".");
+            return sb.toString();
+        }
+
+        for (SynNode node : data) {
             String str = "";
             if (node.symbol != null) {
-                str = String.format("%s(%s)", node.symbol.token.toString().toLowerCase(), node.symbol.lexeme);
+                str = String.format("[%s \"%s\"]", node.symbol.token, node.symbol.lexeme);
             } else {
-                str = node.ruleName;
+                str = String.format("%s", node.ruleName);
             }
-            
+
             sb.append(seperator + str);
-            seperator = ", ";
+            seperator = " ";
         }
 
         return sb.toString();

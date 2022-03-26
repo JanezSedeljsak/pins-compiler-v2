@@ -79,6 +79,7 @@ other -> identifier identifiere .
 other -> new expr .
 other -> del expr .
 other -> ( expr expre ) .
+other -> { stmt stmts }
 
 expre -> .
 expre -> : type .
