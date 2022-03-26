@@ -1,0 +1,85 @@
+prg -> decl decls .
+
+decls -> decl decls .
+decls -> .
+
+decl -> typ identifier = type ; .
+decl -> var identifier : type ; .
+decl -> fun identifier ( params ) : type = expr ; .
+
+params -> .
+params -> identifier : type param .
+
+param -> .
+param -> , identifier : type param .
+
+type -> void | char | int .
+type -> identifier .
+type -> [ expr ] type .
+type -> ^ type .
+type -> ( type ) .
+
+stmts -> stmt stmts .
+stmts -> .
+
+expre2 -> ; .
+expre2 -> = expr ; .
+
+ifend -> end ; .
+ifend -> else stmt stmts end ; .
+
+stmt -> expr expre2 .
+stmt -> if expr then stmt stmts ifend .
+stmt -> while expr do stmt stmts end ; .
+
+expr -> or .
+or -> and or1 .
+or1 -> OR and or1 .
+or1 -> .
+
+and -> rel and1 .
+and1 -> AND rel and1 .
+and1 -> .
+
+rel -> plusminus rel1 .
+rel1 -> REL plusminus rel1 .
+rel1 -> .
+
+REL -> == | != | < | > | <= | >= .
+PLUSMINUS -> + | - .
+ADVMATH -> * | / | % .
+PREFIX -> ! | + | - | ^ .
+
+plusminus -> advmath plusminus1 .
+plusminus1 -> PLUSMINUS advmath plusminus1 .
+plusminus1 -> .
+
+advmath -> prefix advmath1 .
+advmath1 -> ADVMATH prefix advmath1 .
+advmath1 -> .
+
+prefix -> postfix .
+prefix -> PREFIX prefix .
+
+postfix -> other postfix1 .
+postfix1 -> [ expr ] postfix1 .
+postfix1 -> ^ postfix1 .
+
+identifiere -> .
+identifiere -> (params2) .
+
+params2 -> .
+params2 -> expr exprs .
+
+exors -> .
+exprs -> , expr exprs .
+
+other -> const .
+other -> identifier identifiere .
+other -> new expr .
+other -> del expr .
+other -> ( expr expre ) .
+
+expre -> .
+expre -> : type .
+expre -> where decl decls .
