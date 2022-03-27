@@ -2,5 +2,6 @@ typ x = char ;
 var y : arr ;
 
 fun Metoda () : integer = {
-    x=5;
+    y = a();
+    x = 5;
 };

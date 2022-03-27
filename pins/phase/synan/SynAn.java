@@ -89,7 +89,7 @@ public class SynAn implements AutoCloseable {
 				parseType(declNode);
 				addExpected(declNode, Token.ASSIGN);
 				parseExpr(declNode);
-				addExpected(declNode, Token.ASSIGN);
+				addExpected(declNode, Token.SEMICOLON);
 				break;
 			default:
 				throw new Report.Error(peek().location, String.format("Unexpected token at start of DECL: %s", peek().lexeme));
@@ -156,7 +156,7 @@ public class SynAn implements AutoCloseable {
 	private void parseOptionalParams(SynNode parentNode) {
 		SynNode optionalParamsNode = new SynNode("OPTIONAL_PARAMS");
 		move();
-		
+
 		switch (peek().token) {
 			case COMMA:
 				optionalParamsNode.addNodeSymbol(peek());
@@ -322,6 +322,7 @@ public class SynAn implements AutoCloseable {
 				parsePrefix(prefixNode);
 				break;
 			default:
+				dontMove = true;
 				parsePostfix(prefixNode);
 		}
 
@@ -507,6 +508,7 @@ public class SynAn implements AutoCloseable {
 				addExpected(stmtNode, Token.SEMICOLON);
 				break;
 			default:
+				dontMove = true;
 				parseExpr(stmtNode);
 				parseOptionalAssign(stmtNode);
 		}
@@ -526,6 +528,7 @@ public class SynAn implements AutoCloseable {
 				dontMove = true;
 				break;
 			default:
+				dontMove = true;
 				parseStmt(optionalStmtsNode);
 		}
 
