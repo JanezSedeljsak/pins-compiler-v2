@@ -32,8 +32,7 @@ stmt -> expr expre2 .
 stmt -> if expr then stmt stmts ifend .
 stmt -> while expr do stmt stmts end ; .
 
-expr -> or .
-or -> and or1 .
+expr -> and or1 .
 or1 -> OR and or1 .
 or1 -> .
 
@@ -64,6 +63,7 @@ prefix -> PREFIX prefix .
 postfix -> other postfix1 .
 postfix1 -> [ expr ] postfix1 .
 postfix1 -> ^ postfix1 .
+postfix1 -> .
 
 identifiere -> .
 identifiere -> (params2) .
@@ -76,10 +76,10 @@ exprs -> , expr exprs .
 
 other -> const .
 other -> identifier identifiere .
-other -> new expr .
-other -> del expr .
+other -> new other .
+other -> del other .
 other -> ( expr expre ) .
-other -> { stmt stmts }
+other -> { stmt stmts } .
 
 expre -> .
 expre -> : type .
