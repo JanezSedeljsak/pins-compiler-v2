@@ -61,6 +61,7 @@ public class SynAn implements AutoCloseable {
 	private void parseDecl(SynNode parentNode) {
 		SynNode declNode = new SynNode("DECL");
 		move();
+
 		switch (peek().token) {
 			case EOF:
 				return;
@@ -88,6 +89,7 @@ public class SynAn implements AutoCloseable {
 				parseType(declNode);
 				addExpected(declNode, Token.ASSIGN);
 				parseExpr(declNode);
+				addExpected(declNode, Token.ASSIGN);
 				break;
 			default:
 				throw new Report.Error(peek().location, String.format("Unexpected token at start of DECL: %s", peek().lexeme));
@@ -101,6 +103,7 @@ public class SynAn implements AutoCloseable {
 	private void parseType(SynNode parentNode) {
 		SynNode typeNode = new SynNode("TYPE");
 		move();
+
 		switch (peek().token) {
 			case VOID:
 			case CHAR:
@@ -134,6 +137,7 @@ public class SynAn implements AutoCloseable {
 	private void parseParams(SynNode parentNode) {
 		SynNode paramsNode = new SynNode("PARAMS");
 		move();
+
 		switch (peek().token) {
 			case IDENTIFIER:
 				paramsNode.addNodeSymbol(peek());
@@ -152,6 +156,7 @@ public class SynAn implements AutoCloseable {
 	private void parseOptionalParams(SynNode parentNode) {
 		SynNode optionalParamsNode = new SynNode("OPTIONAL_PARAMS");
 		move();
+		
 		switch (peek().token) {
 			case COMMA:
 				optionalParamsNode.addNodeSymbol(peek());
@@ -178,6 +183,8 @@ public class SynAn implements AutoCloseable {
 
 	private void parseOr(SynNode parentNode) {
 		SynNode orNode = new SynNode("OR");
+		move();
+
 		switch (peek().token) {
 			case OR:
 				orNode.addNodeSymbol(peek());
@@ -226,6 +233,8 @@ public class SynAn implements AutoCloseable {
 
 	private void parseInnerRelational(SynNode parentNode) {
 		SynNode innerRelationalNode = new SynNode("RELATIONAL_INNER");
+		move();
+
 		switch (peek().token) {
 			case EQUAL:
 			case NOT_EQUAL:
@@ -255,6 +264,8 @@ public class SynAn implements AutoCloseable {
 
 	private void parseInnerAddSub(SynNode parentNode) {
 		SynNode innerAddSubNode = new SynNode("INNER_ADD_SUB");
+		move();
+
 		switch (peek().token) {
 			case PLUS:
 			case MINUS:
@@ -280,6 +291,8 @@ public class SynAn implements AutoCloseable {
 
 	private void parseInnerOtherMath(SynNode parentNode) {
 		SynNode innerOtherMathNode = new SynNode("INNER_OTHER_MATH");
+		move();
+
 		switch (peek().token) {
 			case MULTIPLY:
 			case DIVIDE:
@@ -298,6 +311,8 @@ public class SynAn implements AutoCloseable {
 
 	private void parsePrefix(SynNode parentNode) {
 		SynNode prefixNode = new SynNode("PREFIX");
+		move();
+
 		switch (peek().token) {
 			case NEGATION:
 			case PLUS:
@@ -323,6 +338,8 @@ public class SynAn implements AutoCloseable {
 
 	private void parseInnerPostfix(SynNode parentNode) {
 		SynNode postfixNode = new SynNode("INNER_POSTFIX");
+		move();
+
 		switch (peek().token) {
 			case LEFT_BRACKET:
 				postfixNode.addNodeSymbol(peek());
@@ -343,6 +360,8 @@ public class SynAn implements AutoCloseable {
 
 	private void parseExprWrapper(SynNode parentNode) {
 		SynNode exprWrapperNode = new SynNode("EXPR_WRAPPER");
+		move();
+
 		switch (peek().token) {
 			case INT_CONST:
 			case CHAR_CONST:
@@ -362,7 +381,7 @@ public class SynAn implements AutoCloseable {
 			case LEFT_BRACE:
 				exprWrapperNode.addNodeSymbol(peek());
 				parseStmt(exprWrapperNode);
-				parseStmts(exprWrapperNode);
+				parseOptionalStmts(exprWrapperNode);
 				addExpected(exprWrapperNode, Token.RIGHT_BRACE);
 				break;
 			case LEFT_PARENTHESIS:
@@ -381,6 +400,8 @@ public class SynAn implements AutoCloseable {
 
 	private void parseExprEnd(SynNode parentNode) {
 		SynNode exprEndNode = new SynNode("EXPR_END");
+		move();
+
 		switch (peek().token) {
 			case COLON:
 				exprEndNode.addNodeSymbol(peek());
@@ -398,7 +419,9 @@ public class SynAn implements AutoCloseable {
 	}
 
 	private void parseFuncCall(SynNode parentNode) {
-		SynNode funcCallNode = new SynNode("FUNC_PARAMS");
+		SynNode funcCallNode = new SynNode("FUNC_CALL");
+		move();
+
 		switch (peek().token) {
 			case LEFT_PARENTHESIS:
 				funcCallNode.addNodeSymbol(peek());
@@ -414,7 +437,9 @@ public class SynAn implements AutoCloseable {
 	}
 
 	private void parseCallParams(SynNode parentNode) {
-		SynNode callParamsNode = new SynNode("FUNC_PARAMS");
+		SynNode callParamsNode = new SynNode("CALL_PARAMS");
+		move();
+
 		switch (peek().token) {
 			case IDENTIFIER:
 			case LEFT_PARENTHESIS:
@@ -442,7 +467,9 @@ public class SynAn implements AutoCloseable {
 	}
 
 	private void parseOptionalCallParams(SynNode parentNode) {
-		SynNode optionalCallParamsNode = new SynNode("FUNC_PARAMS");
+		SynNode optionalCallParamsNode = new SynNode("OPTIOINAL_CALL_PARAMS");
+		move();
+
 		switch (peek().token) {
 			case COMMA:
 				optionalCallParamsNode.addNodeSymbol(peek());
@@ -455,5 +482,99 @@ public class SynAn implements AutoCloseable {
 		
 		parentNode.addNode(optionalCallParamsNode);
 		Report.info(optionalCallParamsNode.toString());
+	}
+
+	private void parseStmt(SynNode parentNode) {
+		SynNode stmtNode = new SynNode("STMT");
+		move();
+
+		switch (peek().token) {
+			case IF:
+				stmtNode.addNodeSymbol(peek());
+				parseExpr(stmtNode);
+				addExpected(stmtNode, Token.THEN);
+				parseStmt(stmtNode);
+				parseOptionalStmts(stmtNode);
+				parseIfEnd(stmtNode);
+				break;
+			case WHILE:
+				stmtNode.addNodeSymbol(peek());
+				parseExpr(stmtNode);
+				addExpected(stmtNode, Token.DO);
+				parseStmt(stmtNode);
+				parseOptionalStmts(stmtNode);
+				addExpected(stmtNode, Token.END);
+				addExpected(stmtNode, Token.SEMICOLON);
+				break;
+			default:
+				parseExpr(stmtNode);
+				parseOptionalAssign(stmtNode);
+		}
+
+		parentNode.addNode(stmtNode);
+		Report.info(stmtNode.toString());
+	}
+
+	private void parseOptionalStmts(SynNode parentNode) {
+		SynNode optionalStmtsNode = new SynNode("OPTIOINAL_STMTS");
+		move();
+
+		switch (peek().token) {
+			case RIGHT_BRACE:
+			case ELSE:
+			case END:
+				dontMove = true;
+				break;
+			default:
+				parseStmt(optionalStmtsNode);
+		}
+
+		parentNode.addNode(optionalStmtsNode);
+		Report.info(optionalStmtsNode.toString());
+	}
+
+	private void parseOptionalAssign(SynNode parentNode) {
+		SynNode optionalAssignNode = new SynNode("OPTIOINAL_ASSIGN");
+		move();
+
+		switch (peek().token) {
+			case SEMICOLON:
+				optionalAssignNode.addNodeSymbol(peek());
+				break;
+			case ASSIGN:
+				optionalAssignNode.addNodeSymbol(peek());
+				parseExpr(optionalAssignNode);
+				addExpected(optionalAssignNode, Token.SEMICOLON);
+				break;
+			default:
+				throw new Report.Error(peek().location, String.format("Expected assignment or semicolon after expression, got: %s", peek().lexeme));
+		}
+
+		parentNode.addNode(optionalAssignNode);
+		Report.info(optionalAssignNode.toString());
+	}
+
+	private void parseIfEnd(SynNode parentNode) {
+		SynNode ifEndNode = new SynNode("IF_END");
+		move();
+
+		switch (peek().token) {
+			case END:
+				ifEndNode.addNodeSymbol(peek());
+				addExpected(ifEndNode, Token.SEMICOLON);
+				break;
+			case ELSE:
+				ifEndNode.addNodeSymbol(peek());
+				parseStmt(ifEndNode);
+				parseOptionalStmts(ifEndNode);
+				addExpected(ifEndNode, Token.END);
+				addExpected(ifEndNode, Token.SEMICOLON);
+				break;
+			default:
+				throw new Report.Error(peek().location, String.format("Unexpected token at start of IF_END: %s", peek().lexeme));
+		}
+
+		parentNode.addNode(ifEndNode);
+		Report.info(ifEndNode.toString());
 	}
 }

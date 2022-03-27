@@ -1,18 +1,6 @@
 typ x = char ;
 var y : arr ;
 
-fun Metoda (var1 : int, var2 : int, var3 : int) : integer = {
-    y = a();
-    x = a(55, 'a');
-    
-    if y == 5 then
-        c('4');
-    end;
-    
-    if x <= 6 then
-        s = 55;
-        g();
-    else
-        z = 5 + 8 * 8;
-    end;
+fun Metoda () : integer = {
+    x=5;
 };
