@@ -47,7 +47,11 @@ public class SynAn implements AutoCloseable {
 		} else {
 			SynNode.print(this.syntree);
 			String err = String.format("Unexpected token: %s after: %s - in %s", peek().lexeme, prevSymb.lexeme, node.ruleName);
-			throw new Report.Error(peek().location, err);
+			if (peek() != null && peek().location != null) {
+				throw new Report.Error(peek().location, err);
+			} else {
+				throw new Report.Error(err);
+			}
 		}
 	}
 
@@ -57,7 +61,7 @@ public class SynAn implements AutoCloseable {
 	}
 
 	private void parseDecls(SynNode parentNode) {
-		parseDecl(this.syntree);
+		parseDecl(parentNode);
 	}
 
 	private void parseDecl(SynNode parentNode) {
@@ -66,6 +70,8 @@ public class SynAn implements AutoCloseable {
 
 		switch (peek().token) {
 			case EOF:
+			case RIGHT_PARENTHESIS:
+				dontMove = true;
 				return;
 			case TYP:
 				declNode.addNodeSymbol(peek());
@@ -100,7 +106,7 @@ public class SynAn implements AutoCloseable {
 
 		// Report.info(declNode.toString());
 		parentNode.addNode(declNode);
-		parseDecls(this.syntree);
+		parseDecls(parentNode);
 	}
 
 	private void parseType(SynNode parentNode) {
@@ -179,31 +185,7 @@ public class SynAn implements AutoCloseable {
 
 	private void parseExpr(SynNode parentNode) {
 		SynNode exprNode = new SynNode("EXPR");
-		move();
-
-		switch(peek().token) {
-			case LEFT_BRACKET:
-			case LEFT_BRACE:
-			case IDENTIFIER:
-			case POINTER:
-			case PLUS:
-			case MINUS:
-			case NEGATION:
-			case VOID_CONST:
-			case INT_CONST:
-			case CHAR_CONST:
-			case POINTER_CONST:
-			case NEW:
-			case DEL:
-				dontMove = true;
-				parseOr(exprNode);
-				break;
-			default:
-				SynNode.print(this.syntree);
-				throw new Report.Error(peek().location, String.format("Unexpected token at start of TYPE: %s", peek().lexeme));
-		}
-
-		
+		parseOr(exprNode);
 		parentNode.addNode(exprNode);
 		// Report.info(exprNode.toString());
 	}
@@ -244,6 +226,8 @@ public class SynAn implements AutoCloseable {
 
 	private void parseInnerAnd(SynNode parentNode) {
 		SynNode innerAndNode = new SynNode("AND_INNER");
+		move();
+
 		switch (peek().token) {
 			case AND:
 				innerAndNode.addNodeSymbol(peek());
@@ -429,7 +413,7 @@ public class SynAn implements AutoCloseable {
 				break;
 			default:
 				SynNode.print(this.syntree);
-				throw new Report.Error(peek().location, String.format("Unexpected token at start of EXPR: %s", peek().lexeme));
+				throw new Report.Error(peek().location, String.format("Unexpected token at start of EXPR_WRAPPER: %s", peek().lexeme));
 		}
 		
 		parentNode.addNode(exprWrapperNode);
