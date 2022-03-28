@@ -23,7 +23,7 @@ public class SynAn implements AutoCloseable {
 		parseSource();
 		SynNode.print(this.syntree);
 		if (peek().token != Token.EOF) {
-			throw new Report.Error(peek(), "Unexpected '" + peek() + "' at the end of a program.");
+			throw new Report.Error(String.format("Unexpected token at end of program: %s", peek().lexeme));
 		}
 	}
 
@@ -47,6 +47,10 @@ public class SynAn implements AutoCloseable {
 		} else {
 			SynNode.print(this.syntree);
 			String err = String.format("Unexpected token: %s after: %s - in %s", peek().lexeme, prevSymb.lexeme, node.ruleName);
+			if (peek().token.equals(Token.EOF)) {
+				throw new Report.Error("Unexpected EOF");
+			}
+
 			if (peek() != null && peek().location != null) {
 				throw new Report.Error(peek().location, err);
 			} else {

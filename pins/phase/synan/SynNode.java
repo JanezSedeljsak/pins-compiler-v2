@@ -10,7 +10,7 @@ public class SynNode {
     ArrayList<SynNode> data;
 
     // true => print only rules where there is atleast one lexeme
-    static boolean onlyWithLexemes = true; 
+    static boolean onlyWithLexemes = false; 
 
     SynNode(String ruleName) {
         this.symbol = null;
