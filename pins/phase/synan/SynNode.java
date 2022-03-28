@@ -2,13 +2,16 @@ package pins.phase.synan;
 
 import java.util.*;
 import pins.data.symbol.*;
+import pins.common.report.*;
 
 public class SynNode {
     Symbol symbol;
     String ruleName;
     ArrayList<SynNode> data;
 
-    /* Root constructor */
+    // true => print only rules where there is atleast one lexeme
+    static boolean onlyWithLexemes = true; 
+
     SynNode(String ruleName) {
         this.symbol = null;
         this.ruleName = ruleName;
@@ -26,6 +29,29 @@ public class SynNode {
 
     public void addNodeSymbol(Symbol symbol) {
         this.addNode(new SynNode(symbol));
+    }
+
+    public static void print(SynNode node) {
+        boolean hasLexemChild = false;
+
+        if (onlyWithLexemes) {
+            for (SynNode child : node.data) {
+                if (child.symbol != null) {
+                    hasLexemChild = true;
+                    break;
+                }
+            }
+        } else {
+            hasLexemChild = true;
+        }
+
+        if (hasLexemChild && node.symbol == null) {
+            Report.info(node.toString());
+        }
+
+        for (SynNode child : node.data) {
+            print(child);
+        }
     }
 
     public String toString() {

@@ -1,7 +1,23 @@
 typ x = char ;
 var y : arr ;
+var s : int;
 
-fun Metoda () : integer = {
-    y = a();
-    x = 5;
+#{
+    Metoda prejme ful kul parametre
+    #{ Vrne pa nothing }#
+}#
+fun Metoda (a: int, b: char, c: arr) : void = {
+    y^ = get_arr_pointer();
+    x = _get_char(55, 'a', 8, 9, 10);
+    
+    if y[0] == 5 | !(x == (4 * 5)) then
+        c('4');
+    end;
+    
+    if y[3] <= 6 then
+        s = 55;
+        g();
+    else
+        s = 5 + 8 * 8;
+    end;
 };
