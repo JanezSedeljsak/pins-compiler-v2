@@ -47,6 +47,14 @@ public enum Token {
 		this.isRegex = isRegex;
 	}
 
+	public String str() {
+		if (!isRegex) {
+			return match;
+		}
+
+		return this.toString();
+	}
+
 	// a bit of a hacky solution for character matching (implemented like this for easier error tracking)
 	private static boolean handleCharacterMatching(String match, boolean fullMatch, int row, int col) {
 		int matchLength = match.length();

@@ -46,7 +46,7 @@ public class SynAn implements AutoCloseable {
 			node.addNodeSymbol(peek());
 		} else {
 			SynNode.print(this.syntree);
-			String err = String.format("Unexpected token: %s after: %s - in %s", peek().lexeme, prevSymb.lexeme, node.ruleName);
+			String err = String.format("Unexpected token: %s after: %s - expected %s", peek().lexeme, prevSymb.lexeme, token.str());
 			if (peek().token.equals(Token.EOF)) {
 				throw new Report.Error("Unexpected EOF");
 			}
