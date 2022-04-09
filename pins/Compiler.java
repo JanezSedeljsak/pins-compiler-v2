@@ -2,6 +2,7 @@ package pins;
 
 import java.util.*;
 import pins.common.report.*;
+import pins.data.ast.*;
 import pins.phase.lexan.*;
 import pins.phase.synan.*;
 
@@ -11,12 +12,13 @@ import pins.phase.synan.*;
 public class Compiler {
 
 	/** All phases of the compiler. */
-	private static final String phases = "none|lexan|synan";
+	private static final String phases = "none|lexan|synan|abstr";
 
 	/** Values of command line arguments. */
 	private static HashMap<String, String> cmdLine = new HashMap<String, String>();
 
 	public static void main(String[] args) {
+
 		try {
 			Report.info("This is the PINS'22 compiler:");
 
@@ -83,12 +85,20 @@ public class Compiler {
 					break;
 				}
 				
-				//Syntax analysis.
+				// Syntax analysis.
+				AST ast = null;
 				try (LexAn lexan = new LexAn(cmdLine.get("--src-file-name")); SynAn synan = new SynAn(lexan)) {
-					synan.parser();
+					ast = synan.parser();
 				}
 				if (cmdLine.get("--target-phase").equals("synan"))
 					break;
+				
+				// Abstract syntax.
+				if (cmdLine.get("--target-phase").equals("abstr")) {
+					ast.log("");
+					break;
+				}
+
 			}
 
 			Report.info("Done.");
