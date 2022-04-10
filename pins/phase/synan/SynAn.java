@@ -23,16 +23,11 @@ public class SynAn implements AutoCloseable {
 
 	public AST parser() {
 		parseSource();
-
-		while (peek() == null || peek().token != Token.EOF) {
-			move();
-		}
-		
 		if (peek() != null && peek().token == Token.EOF) {
 			return ast;
 		}
 
-		throw new Report.Error(String.format("Unexpected token at end of program: %s, expected: EOF", peek().lexeme));
+		throw new Report.Error(peek().location, String.format("Unexpected token at end of program: %s, expected: EOF", peek().lexeme));
 	}
 
 	public Symbol peek() {
@@ -53,7 +48,7 @@ public class SynAn implements AutoCloseable {
 		if (peek().token.equals(token)) {
 			return peek();
 		} else {
-			String err = String.format("Unexpected token: %s after: %s - expected %s", peek().lexeme, prevSymb.lexeme, token.str());
+			String err = String.format("Unexpected token: \"%s\" after: \"%s\" - expected \"%s\"", peek().lexeme, prevSymb.lexeme, token.str());
 			if (peek().token.equals(Token.EOF)) {
 				throw new Report.Error("Unexpected EOF");
 			}
@@ -100,20 +95,22 @@ public class SynAn implements AutoCloseable {
 				checkExpected(Token.SEMICOLON);
 				declNode = new AstVarDecl(loc, name, type);
 				break;
-			/*case FUN:
-				declNode.addNodeSymbol(peek());
-				checkExpected(Token.IDENTIFIER);
+			case FUN:
+				name = checkExpected(Token.IDENTIFIER).lexeme;
 				checkExpected(Token.LEFT_PARENTHESIS);
-				parseParams(declNode);
+				Vector<AstParDecl> paramsVector = new Vector<>();
+				parseParams(paramsVector);
+				ASTs<AstParDecl> pars = new ASTs<>(loc, paramsVector);
 				checkExpected(Token.RIGHT_PARENTHESIS);
 				checkExpected(Token.COLON);
-				parseType(declNode);
+				type = parseType();
 				checkExpected(Token.ASSIGN);
-				parseExpr(declNode);
+				AstExpr expr = parseExpr();
 				checkExpected(Token.SEMICOLON);
-				break;*/
+				declNode = new AstFunDecl(loc, name, pars, type, expr);
+				break;
 			default:
-				throw new Report.Error(peek().location, String.format("Unexpected token at start of DECL: %s", peek().lexeme));
+				throw new Report.Error(peek().location, String.format("Unexpected token at start of decleration \"%s\", allowed [typ, var, fun]", peek().lexeme));
 		}
 
 		parentNode.add(declNode);
@@ -133,322 +130,333 @@ public class SynAn implements AutoCloseable {
 				return new AstAtomType(loc, AstAtomType.Kind.INT);
 			case IDENTIFIER:
 				return new AstTypeName(loc, peek().lexeme);
-			/*case LEFT_BRACKET:
-				typeNode.addNodeSymbol(peek());
-				parseExpr(typeNode);
+			case LEFT_BRACKET:
+				AstExpr expr = parseExpr();
 				checkExpected(Token.RIGHT_BRACKET);
-				parseType(typeNode);
-				break;
+				AstType type = parseType();
+				return new AstArrType(loc, type, expr);
 			case POINTER:
-				typeNode.addNodeSymbol(peek());
-				parseType(typeNode);
-				break;
+				return new AstPtrType(loc, parseType());
 			case LEFT_PARENTHESIS:
-				typeNode.addNodeSymbol(peek());
-				parseType(typeNode);
+				type = parseType();
 				checkExpected(Token.RIGHT_PARENTHESIS);
-				break;*/
+				return type;
 			default:
-				throw new Report.Error(peek().location, String.format("Unexpected token at start of TYPE: %s", peek().lexeme));
+				throw new Report.Error(peek().location, String.format("Unexpected token at start of TYPE decleration: \"%s\"", peek().lexeme));
 		}
 	}
 
-	private void parseParams(SynNode parentNode) {
-		SynNode paramsNode = new SynNode("PARAMS");
+	private void parseParams(Vector<AstParDecl> parentNode) {
 		move();
+		Location loc = peek().location;
 
 		switch (peek().token) {
 			case IDENTIFIER:
-				paramsNode.addNodeSymbol(peek());
+				String name = peek().lexeme;
 				checkExpected(Token.COLON);
-				parseType();
-				parseOptionalParams(paramsNode);
+				AstType type = parseType();
+				parentNode.add(new AstParDecl(loc, name, type));
+				parseOptionalParams(parentNode);
 				break;
 			default:
 				dontMove = true;
 		}
-
-		parentNode.addNode(paramsNode);
 	}
 
-	private void parseOptionalParams(SynNode parentNode) {
-		SynNode optionalParamsNode = new SynNode("OPTIONAL_PARAMS");
+	private void parseOptionalParams(Vector<AstParDecl> parentNode) {
 		move();
+		Location loc = peek().location;
 
 		switch (peek().token) {
 			case COMMA:
-				optionalParamsNode.addNodeSymbol(peek());
-				checkExpected(Token.IDENTIFIER);
+				String name = checkExpected(Token.IDENTIFIER).lexeme;
 				checkExpected(Token.COLON);
-				parseType();
-				parseOptionalParams(optionalParamsNode);
+				AstType type = parseType();
+				parentNode.add(new AstParDecl(loc, name, type));
+				parseOptionalParams(parentNode);
 				break;
 			default:
 				dontMove = true;
 		}
-
-		parentNode.addNode(optionalParamsNode);
 	}
 
-	private void parseExpr(SynNode parentNode) {
-		SynNode exprNode = new SynNode("EXPR");
-		parseOr(exprNode);
-		parentNode.addNode(exprNode);
+	private AstExpr parseExpr() {
+		return parseOr();
 	}
 	
-	private void parseOr(SynNode parentNode) {
-		SynNode orNode = new SynNode("OR");
-		parseAnd(orNode);
-		parseInnerOr(orNode);
-		parentNode.addNode(orNode);
+	private AstExpr parseOr() {
+		AstExpr left = parseAnd();
+		return parseInnerOr(left);
 	}
 
-	private void parseInnerOr(SynNode parentNode) {
-		SynNode orNode = new SynNode("OR");
+	private AstExpr parseInnerOr(AstExpr left) {
 		move();
+		Location loc = peek().location;
 
 		switch (peek().token) {
 			case OR:
-				orNode.addNodeSymbol(peek());
-				parseAnd(orNode);
-				parseInnerOr(orNode);
-				break;
+				AstExpr temp = parseAnd();
+				AstExpr right = parseInnerOr(temp);
+				return new AstBinExpr(loc, AstBinExpr.Oper.OR, left, right);
 			default:
 				dontMove = true;
 		}
 
-		parentNode.addNode(orNode);
+		return left;
 	}
 
-	private void parseAnd(SynNode parentNode) {
-		SynNode andNode = new SynNode("AND");
-		parseRelational(andNode);
-		parseInnerAnd(andNode);
-		parentNode.addNode(andNode);
+	private AstExpr parseAnd() {
+		AstExpr left = parseRelational();
+		return parseInnerAnd(left);
 	}
 
-	private void parseInnerAnd(SynNode parentNode) {
-		SynNode innerAndNode = new SynNode("AND_INNER");
+	private AstExpr parseInnerAnd(AstExpr left) {
 		move();
+		Location loc = peek().location;
 
 		switch (peek().token) {
 			case AND:
-				innerAndNode.addNodeSymbol(peek());
-				parseRelational(innerAndNode);
-				parseInnerAnd(innerAndNode);
-				break;
+				AstExpr temp = parseRelational();
+				AstExpr right = parseInnerAnd(temp);
+				return new AstBinExpr(loc, AstBinExpr.Oper.AND, left, right);
 			default:
 				dontMove = true;
 		}
 
-		parentNode.addNode(innerAndNode);
+		return left;
 	}
 
-	private void parseRelational(SynNode parentNode) {
-		SynNode relationalNode = new SynNode("RELATIONAL");
-		parseAddSub(relationalNode);
-		parseInnerRelational(relationalNode);
-		parentNode.addNode(relationalNode);
+	private AstExpr parseRelational() {
+		AstExpr left = parseAddSub();
+		return parseInnerRelational(left);
 	}
 
-	private void parseInnerRelational(SynNode parentNode) {
-		SynNode innerRelationalNode = new SynNode("RELATIONAL_INNER");
+	private AstExpr parseInnerRelational(AstExpr left) {
 		move();
+		Location loc = peek().location;
+		AstBinExpr.Oper operator = null;
 
 		switch (peek().token) {
 			case EQUAL:
+				operator = AstBinExpr.Oper.EQU;
+				break;
 			case NOT_EQUAL:
+				operator = AstBinExpr.Oper.NEQ;
+				break;
 			case LESS:
+				operator = AstBinExpr.Oper.LTH;
+				break;
 			case GREATER:
+				operator = AstBinExpr.Oper.GTH;
+				break;
 			case LESS_OR_EQUAL:
+				operator = AstBinExpr.Oper.LEQ;
+				break;
 			case GREATER_OR_EQUAL:
-				innerRelationalNode.addNodeSymbol(peek());
-				parseAddSub(innerRelationalNode);
-				parseInnerRelational(innerRelationalNode);
+				operator = AstBinExpr.Oper.GEQ;
 				break;
 			default:
 				dontMove = true;
 		}
 
-		parentNode.addNode(innerRelationalNode);
+		if (operator != null) {
+			AstExpr temp = parseAddSub();
+			AstExpr right = parseInnerRelational(temp);
+			return new AstBinExpr(loc, operator, left, right);
+		}
+
+		return left;
 	}
 
-	private void parseAddSub(SynNode parentNode) {
-		SynNode addSubNode = new SynNode("ADD_SUB");
-		parseOtherMath(addSubNode);
-		parseInnerAddSub(addSubNode);
-		parentNode.addNode(addSubNode);
+	private AstExpr parseAddSub() {
+		AstExpr left = parseOtherMath();
+		return parseInnerAddSub(left);
 	}
 
-	private void parseInnerAddSub(SynNode parentNode) {
-		SynNode innerAddSubNode = new SynNode("INNER_ADD_SUB");
+	private AstExpr parseInnerAddSub(AstExpr left) {
 		move();
+		Location loc = peek().location;
+		AstBinExpr.Oper operator = null;
 
 		switch (peek().token) {
 			case PLUS:
+				operator = AstBinExpr.Oper.ADD;
+				break;
 			case MINUS:
-				innerAddSubNode.addNodeSymbol(peek());
-				parseOtherMath(innerAddSubNode);
-				parseInnerAddSub(innerAddSubNode);
+				operator = AstBinExpr.Oper.SUB;
 				break;
 			default:
 				dontMove = true;
 		}
 
-		parentNode.addNode(innerAddSubNode);
+		if (operator != null) {
+			AstExpr temp = parseOtherMath();
+			AstExpr right = parseInnerAddSub(temp);
+			return new AstBinExpr(loc, operator, left, right);
+		}
+
+		return left;
 	}
 
-	private void parseOtherMath(SynNode parentNode) {
-		SynNode relationalNode = new SynNode("OTHER_MATH");
-		parsePrefix(relationalNode);
-		parseInnerOtherMath(relationalNode);
-		parentNode.addNode(relationalNode);
+	private AstExpr parseOtherMath() {
+		AstExpr left =  parsePrefix();
+		return parseInnerOtherMath(left);
 	}
 
-	private void parseInnerOtherMath(SynNode parentNode) {
-		SynNode innerOtherMathNode = new SynNode("INNER_OTHER_MATH");
+	private AstExpr parseInnerOtherMath(AstExpr left) {
 		move();
+		Location loc = peek().location;
+		AstBinExpr.Oper operator = null;
 
 		switch (peek().token) {
 			case MULTIPLY:
+				operator = AstBinExpr.Oper.MUL;
+				break;
 			case DIVIDE:
+				operator = AstBinExpr.Oper.DIV;
+				break;
 			case MOD:
-				innerOtherMathNode.addNodeSymbol(peek());
-				parsePrefix(innerOtherMathNode);
-				parseInnerOtherMath(innerOtherMathNode);
+				operator = AstBinExpr.Oper.MOD;
 				break;
 			default:
 				dontMove = true;
 		}
 
-		parentNode.addNode(innerOtherMathNode);
+		if (operator != null) {
+			AstExpr temp = parsePrefix();
+			AstExpr right = parseInnerOtherMath(temp);
+			return new AstBinExpr(loc, operator, left, right);
+		}
+
+		return left;
 	}
 
-	private void parsePrefix(SynNode parentNode) {
-		SynNode prefixNode = new SynNode("PREFIX");
+	private AstExpr parsePrefix() {
 		move();
+		Location loc = peek().location;
+		AstPreExpr.Oper operator = null;
 
 		switch (peek().token) {
 			case NEGATION:
+				operator = AstPreExpr.Oper.NOT;
+				break;
 			case PLUS:
+				operator = AstPreExpr.Oper.ADD;
+				break;
 			case MINUS:
+				operator = AstPreExpr.Oper.SUB;
+				break;
 			case POINTER:
-				prefixNode.addNodeSymbol(peek());
-				parsePrefix(prefixNode);
+				operator = AstPreExpr.Oper.PTR;
 				break;
 			default:
 				dontMove = true;
-				parsePostfix(prefixNode);
 		}
 
-		parentNode.addNode(prefixNode);
+		if (operator != null) {
+			return new AstPreExpr(loc, operator, parsePrefix());
+		}
+
+		return parsePostfix();
 	}
 
-	private void parsePostfix(SynNode parentNode) {
-		SynNode postfixNode = new SynNode("POSTFIX");
-		parseExprWrapper(postfixNode);
-		parseInnerPostfix(postfixNode);
-		parentNode.addNode(postfixNode);
+	private AstExpr parsePostfix() {
+		AstExpr left = parseExprWrapper();
+		return parseInnerPostfix(left);
 	}
 
-	private void parseInnerPostfix(SynNode parentNode) {
-		SynNode postfixNode = new SynNode("INNER_POSTFIX");
+	private AstExpr parseInnerPostfix(AstExpr left) {
 		move();
+		Location loc = peek().location;
 
 		switch (peek().token) {
 			case LEFT_BRACKET:
-				postfixNode.addNodeSymbol(peek());
-				parseExpr(postfixNode);
+				AstExpr temp = parseExpr();
 				checkExpected(Token.RIGHT_BRACKET);
-				break;
+				AstExpr expr = new AstBinExpr(loc, AstBinExpr.Oper.ARR, left, temp);
+				return parseInnerPostfix(expr);
 			case POINTER:
-				postfixNode.addNodeSymbol(peek());
-				parseInnerPostfix(postfixNode);
-				break;
+				expr = new AstPstExpr(loc, AstPstExpr.Oper.PTR, left);
+				return parseInnerPostfix(expr);
 			default:
 				dontMove = true;
 		}
 		
-		parentNode.addNode(postfixNode);
+		return left;
 	}
 
-	private void parseExprWrapper(SynNode parentNode) {
-		SynNode exprWrapperNode = new SynNode("EXPR_WRAPPER");
+	private AstExpr parseExprWrapper() {
 		move();
+		Location loc = peek().location;
 
 		switch (peek().token) {
 			case INT_CONST:
+				return new AstConstExpr(loc, AstConstExpr.Kind.INT, peek().lexeme);
 			case CHAR_CONST:
+				return new AstConstExpr(loc, AstConstExpr.Kind.CHAR, peek().lexeme);
 			case POINTER_CONST:
+				return new AstConstExpr(loc, AstConstExpr.Kind.PTR, peek().lexeme);
 			case VOID_CONST:
-				exprWrapperNode.addNodeSymbol(peek());
-				break;
+				return new AstConstExpr(loc, AstConstExpr.Kind.VOID, peek().lexeme);
 			case IDENTIFIER:
-				exprWrapperNode.addNodeSymbol(peek());
-				parseFuncCall(exprWrapperNode);
-				break;
+				return parseFuncCall(peek().lexeme);
 			case NEW:
+				return new AstPreExpr(loc, AstPreExpr.Oper.NEW, parseExprWrapper());
 			case DEL:
-				exprWrapperNode.addNodeSymbol(peek());
-				parseExprWrapper(exprWrapperNode);
-				break;
+				return new AstPreExpr(loc, AstPreExpr.Oper.DEL, parseExprWrapper());
 			case LEFT_BRACE:
-				exprWrapperNode.addNodeSymbol(peek());
-				parseStmt(exprWrapperNode);
-				parseOptionalStmts(exprWrapperNode);
+				AstStmtExpr stmtExpr = parseListOfStmts(loc);
 				checkExpected(Token.RIGHT_BRACE);
-				break;
+				return stmtExpr;
 			case LEFT_PARENTHESIS:
-				exprWrapperNode.addNodeSymbol(peek());
-				parseExpr(exprWrapperNode);
-				parseExprEnd(exprWrapperNode);
+				AstExpr temp = parseExpr();
+				AstExpr right = parseExprEnd(temp);
 				checkExpected(Token.RIGHT_PARENTHESIS);
-				break;
+				return right;
 			default:
-				throw new Report.Error(peek().location, String.format("Unexpected token at start of EXPR_WRAPPER: %s", peek().lexeme));
+				throw new Report.Error(peek().location, String.format("Unexpected token at start of expression: \"%s\"", peek().lexeme));
 		}
-		
-		parentNode.addNode(exprWrapperNode);
 	}
 
-	private void parseExprEnd(SynNode parentNode) {
-		SynNode exprEndNode = new SynNode("EXPR_END");
+	private AstExpr parseExprEnd(AstExpr left) {
 		move();
+		Location loc = peek().location;
 
 		switch (peek().token) {
 			case COLON:
-				exprEndNode.addNodeSymbol(peek());
-				parseType();
-				break;
+				AstType type = parseType();
+				return new AstCastExpr(loc, left, type);
 			case WHERE:
-				exprEndNode.addNodeSymbol(peek());
-				//parseDecl(exprEndNode);
-				break;
+				Vector<AstDecl> declVector = new Vector<>();
+				parseDecls(declVector);
+				ASTs<AstDecl> decls = new ASTs<>(loc, declVector);
+				return new AstWhereExpr(loc, decls, left);
 			default:
 				dontMove = true;
 		}
-		parentNode.addNode(exprEndNode);
+
+		return left;
 	}
 
-	private void parseFuncCall(SynNode parentNode) {
-		SynNode funcCallNode = new SynNode("FUNC_CALL");
+	private AstExpr parseFuncCall(String name) {
 		move();
+		Location loc = peek().location;
 
 		switch (peek().token) {
 			case LEFT_PARENTHESIS:
-				funcCallNode.addNodeSymbol(peek());
-				parseCallParams(funcCallNode);
+				Vector<AstExpr> argsVector = new Vector<>();
+				parseCallParams(argsVector);
+				ASTs<AstExpr> args = new ASTs<>(loc, argsVector);
 				checkExpected(Token.RIGHT_PARENTHESIS);
-				break;
+				return new AstCallExpr(loc, name, args);
 			default:
 				dontMove = true;
 		}
-		
-		parentNode.addNode(funcCallNode);
+
+		return new AstNameExpr(loc, name);
 	}
 
-	private void parseCallParams(SynNode parentNode) {
-		SynNode callParamsNode = new SynNode("CALL_PARAMS");
+	private void parseCallParams(Vector<AstExpr> parentNode) {
 		move();
 
 		switch (peek().token) {
@@ -463,70 +471,67 @@ public class SynAn implements AutoCloseable {
 			case INT_CONST:
 			case CHAR_CONST:
 			case POINTER_CONST:
-
 			case NEW:
 			case DEL:
 				dontMove = true;
-				parseExpr(callParamsNode);
-				parseOptionalCallParams(callParamsNode);
-				break;
-			default:
-				dontMove = true;
-		}
-		
-		parentNode.addNode(callParamsNode);
-	}
-
-	private void parseOptionalCallParams(SynNode parentNode) {
-		SynNode optionalCallParamsNode = new SynNode("OPTIOINAL_CALL_PARAMS");
-		move();
-
-		switch (peek().token) {
-			case COMMA:
-				optionalCallParamsNode.addNodeSymbol(peek());
-				parseExpr(optionalCallParamsNode);
+				parentNode.add(parseExpr());
 				parseOptionalCallParams(parentNode);
 				break;
 			default:
 				dontMove = true;
 		}
-		
-		parentNode.addNode(optionalCallParamsNode);
 	}
 
-	private void parseStmt(SynNode parentNode) {
-		SynNode stmtNode = new SynNode("STMT");
+	private void parseOptionalCallParams(Vector<AstExpr> parentNode) {
 		move();
 
 		switch (peek().token) {
-			case IF:
-				stmtNode.addNodeSymbol(peek());
-				parseExpr(stmtNode);
-				checkExpected(Token.THEN);
-				parseStmt(stmtNode);
-				parseOptionalStmts(stmtNode);
-				parseIfEnd(stmtNode);
-				break;
-			case WHILE:
-				stmtNode.addNodeSymbol(peek());
-				parseExpr(stmtNode);
-				checkExpected(Token.DO);
-				parseStmt(stmtNode);
-				parseOptionalStmts(stmtNode);
-				checkExpected(Token.END);
-				checkExpected(Token.SEMICOLON);
+			case COMMA:
+				parentNode.add(parseExpr());
+				parseOptionalCallParams(parentNode);
 				break;
 			default:
 				dontMove = true;
-				parseExpr(stmtNode);
-				parseOptionalAssign(stmtNode);
 		}
-
-		parentNode.addNode(stmtNode);
 	}
 
-	private void parseOptionalStmts(SynNode parentNode) {
-		SynNode optionalStmtsNode = new SynNode("OPTIOINAL_STMTS");
+	private AstStmtExpr parseListOfStmts(Location loc) {
+		Vector<AstStmt> stmtsVector = new Vector<>();
+		parseStmt(stmtsVector);
+		parseOptionalStmts(stmtsVector);
+		ASTs<AstStmt> stmts = new ASTs<>(loc, stmtsVector);
+
+		return new AstStmtExpr(loc, stmts);
+	}
+
+	private void parseStmt(Vector<AstStmt> parentNode) {
+		move();
+		Location loc = peek().location;
+
+		switch (peek().token) {
+			case IF:
+				AstExpr expr = parseExpr();
+				checkExpected(Token.THEN);
+				AstExprStmt bodyStmt = new AstExprStmt(peek().location, parseListOfStmts(peek().location));
+				AstStmtExpr endIf = parseIfEnd();
+				parentNode.add(new AstIfStmt(loc, expr, bodyStmt, endIf != null ? new AstExprStmt(loc, endIf) : null));
+				break;
+			case WHILE:
+				expr = parseExpr();
+				checkExpected(Token.DO);
+				bodyStmt = new AstExprStmt(loc, parseListOfStmts(loc));
+				checkExpected(Token.END);
+				checkExpected(Token.SEMICOLON);
+				parentNode.add(new AstWhileStmt(loc, expr, bodyStmt));
+				break;
+			default:
+				dontMove = true;
+				expr = parseExpr();
+				parentNode.add(parseOptionalAssign(expr));
+		}
+	}
+
+	private void parseOptionalStmts(Vector<AstStmt> parentNode) {
 		move();
 
 		switch (peek().token) {
@@ -537,53 +542,42 @@ public class SynAn implements AutoCloseable {
 				break;
 			default:
 				dontMove = true;
-				parseStmt(optionalStmtsNode);
-				parseOptionalStmts(optionalStmtsNode);
+				parseStmt(parentNode);
+				parseOptionalStmts(parentNode);
 		}
-
-		parentNode.addNode(optionalStmtsNode);
 	}
 
-	private void parseOptionalAssign(SynNode parentNode) {
-		SynNode optionalAssignNode = new SynNode("OPTIOINAL_ASSIGN");
+	private AstStmt parseOptionalAssign(AstExpr expr) {
 		move();
+		Location loc = peek().location;
 
 		switch (peek().token) {
 			case SEMICOLON:
-				optionalAssignNode.addNodeSymbol(peek());
-				break;
+				return new AstExprStmt(loc, expr);
 			case ASSIGN:
-				optionalAssignNode.addNodeSymbol(peek());
-				parseExpr(optionalAssignNode);
+				AstExpr expr2 = parseExpr();
 				checkExpected(Token.SEMICOLON);
-				break;
+				return new AstAssignStmt(loc, expr, expr2);
 			default:
-				throw new Report.Error(peek().location, String.format("Expected assignment or semicolon after expression, got: %s", peek().lexeme));
+				throw new Report.Error(peek().location, String.format("Expected assignment or semicolon after expression, got: \"%s\"", peek().lexeme));
 		}
-
-		parentNode.addNode(optionalAssignNode);
 	}
 
-	private void parseIfEnd(SynNode parentNode) {
-		SynNode ifEndNode = new SynNode("IF_END");
+	private AstStmtExpr parseIfEnd() {
 		move();
+		Location loc = peek().location;
 
 		switch (peek().token) {
 			case END:
-				ifEndNode.addNodeSymbol(peek());
 				checkExpected(Token.SEMICOLON);
-				break;
+				return null;
 			case ELSE:
-				ifEndNode.addNodeSymbol(peek());
-				parseStmt(ifEndNode);
-				parseOptionalStmts(ifEndNode);
+				AstStmtExpr elseExpression = parseListOfStmts(loc);
 				checkExpected(Token.END);
 				checkExpected(Token.SEMICOLON);
-				break;
+				return elseExpression;
 			default:
-				throw new Report.Error(peek().location, String.format("Unexpected token at start of IF_END: %s", peek().lexeme));
+				throw new Report.Error(peek().location, String.format("Unexpected token got: \"%s\" \"%s\"", "else|end", peek().lexeme));
 		}
-
-		parentNode.addNode(ifEndNode);
 	}
 }
