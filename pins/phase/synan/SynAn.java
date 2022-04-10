@@ -50,7 +50,7 @@ public class SynAn implements AutoCloseable {
 		} else {
 			String err = String.format("Unexpected token: \"%s\" after: \"%s\" - expected \"%s\"", peek().lexeme, prevSymb.lexeme, token.str());
 			if (peek().token.equals(Token.EOF)) {
-				throw new Report.Error("Unexpected EOF");
+				throw new Report.Error(String.format("Unexpected EOF, expected: \"%s\"", token.str()));
 			}
 
 			if (peek() != null && peek().location != null) {
@@ -61,10 +61,14 @@ public class SynAn implements AutoCloseable {
 		}
 	}
 
+	private Location fromTo(Location loc) {
+		return loc.join(dontMove ? prevSymb.location : current.location);
+	}
+
 	private void parseSource() {
 		Vector<AstDecl> declerations = new Vector<>();
 		parseDecls(declerations);
-		ast = new ASTs<AstDecl>(peek().location, declerations);
+		ast = new ASTs<AstDecl>(null, declerations);
 	}
 
 	private void parseDecls(Vector<AstDecl> parentNode) {
@@ -86,28 +90,28 @@ public class SynAn implements AutoCloseable {
 				checkExpected(Token.ASSIGN);
 				AstType type = parseType();
 				checkExpected(Token.SEMICOLON);
-				declNode = new AstTypDecl(loc, name, type);
+				declNode = new AstTypDecl(fromTo(loc), name, type);
 				break;
 			case VAR:
 				name = checkExpected(Token.IDENTIFIER).lexeme;
 				checkExpected(Token.COLON);
 				type =  parseType();
 				checkExpected(Token.SEMICOLON);
-				declNode = new AstVarDecl(loc, name, type);
+				declNode = new AstVarDecl(fromTo(loc), name, type);
 				break;
 			case FUN:
 				name = checkExpected(Token.IDENTIFIER).lexeme;
 				checkExpected(Token.LEFT_PARENTHESIS);
 				Vector<AstParDecl> paramsVector = new Vector<>();
 				parseParams(paramsVector);
-				ASTs<AstParDecl> pars = new ASTs<>(loc, paramsVector);
+				ASTs<AstParDecl> pars = new ASTs<>(null, paramsVector);
 				checkExpected(Token.RIGHT_PARENTHESIS);
 				checkExpected(Token.COLON);
 				type = parseType();
 				checkExpected(Token.ASSIGN);
 				AstExpr expr = parseExpr();
 				checkExpected(Token.SEMICOLON);
-				declNode = new AstFunDecl(loc, name, pars, type, expr);
+				declNode = new AstFunDecl(fromTo(loc), name, pars, type, expr);
 				break;
 			default:
 				throw new Report.Error(peek().location, String.format("Unexpected token at start of decleration \"%s\", allowed [typ, var, fun]", peek().lexeme));
@@ -134,9 +138,10 @@ public class SynAn implements AutoCloseable {
 				AstExpr expr = parseExpr();
 				checkExpected(Token.RIGHT_BRACKET);
 				AstType type = parseType();
-				return new AstArrType(loc, type, expr);
+				return new AstArrType(fromTo(loc), type, expr);
 			case POINTER:
-				return new AstPtrType(loc, parseType());
+				type = parseType();
+				return new AstPtrType(fromTo(loc), type);
 			case LEFT_PARENTHESIS:
 				type = parseType();
 				checkExpected(Token.RIGHT_PARENTHESIS);
@@ -155,7 +160,7 @@ public class SynAn implements AutoCloseable {
 				String name = peek().lexeme;
 				checkExpected(Token.COLON);
 				AstType type = parseType();
-				parentNode.add(new AstParDecl(loc, name, type));
+				parentNode.add(new AstParDecl(fromTo(loc), name, type));
 				parseOptionalParams(parentNode);
 				break;
 			default:
@@ -172,7 +177,7 @@ public class SynAn implements AutoCloseable {
 				String name = checkExpected(Token.IDENTIFIER).lexeme;
 				checkExpected(Token.COLON);
 				AstType type = parseType();
-				parentNode.add(new AstParDecl(loc, name, type));
+				parentNode.add(new AstParDecl(fromTo(loc), name, type));
 				parseOptionalParams(parentNode);
 				break;
 			default:
@@ -191,13 +196,12 @@ public class SynAn implements AutoCloseable {
 
 	private AstExpr parseInnerOr(AstExpr left) {
 		move();
-		Location loc = peek().location;
 
 		switch (peek().token) {
 			case OR:
 				AstExpr temp = parseAnd();
 				AstExpr right = parseInnerOr(temp);
-				return new AstBinExpr(loc, AstBinExpr.Oper.OR, left, right);
+				return new AstBinExpr(fromTo(left.location), AstBinExpr.Oper.OR, left, right);
 			default:
 				dontMove = true;
 		}
@@ -212,13 +216,12 @@ public class SynAn implements AutoCloseable {
 
 	private AstExpr parseInnerAnd(AstExpr left) {
 		move();
-		Location loc = peek().location;
 
 		switch (peek().token) {
 			case AND:
 				AstExpr temp = parseRelational();
 				AstExpr right = parseInnerAnd(temp);
-				return new AstBinExpr(loc, AstBinExpr.Oper.AND, left, right);
+				return new AstBinExpr(fromTo(left.location), AstBinExpr.Oper.AND, left, right);
 			default:
 				dontMove = true;
 		}
@@ -233,7 +236,6 @@ public class SynAn implements AutoCloseable {
 
 	private AstExpr parseInnerRelational(AstExpr left) {
 		move();
-		Location loc = peek().location;
 		AstBinExpr.Oper operator = null;
 
 		switch (peek().token) {
@@ -262,7 +264,7 @@ public class SynAn implements AutoCloseable {
 		if (operator != null) {
 			AstExpr temp = parseAddSub();
 			AstExpr right = parseInnerRelational(temp);
-			return new AstBinExpr(loc, operator, left, right);
+			return new AstBinExpr(fromTo(left.location), operator, left, right);
 		}
 
 		return left;
@@ -275,7 +277,6 @@ public class SynAn implements AutoCloseable {
 
 	private AstExpr parseInnerAddSub(AstExpr left) {
 		move();
-		Location loc = peek().location;
 		AstBinExpr.Oper operator = null;
 
 		switch (peek().token) {
@@ -292,7 +293,7 @@ public class SynAn implements AutoCloseable {
 		if (operator != null) {
 			AstExpr temp = parseOtherMath();
 			AstExpr right = parseInnerAddSub(temp);
-			return new AstBinExpr(loc, operator, left, right);
+			return new AstBinExpr(fromTo(left.location), operator, left, right);
 		}
 
 		return left;
@@ -305,7 +306,6 @@ public class SynAn implements AutoCloseable {
 
 	private AstExpr parseInnerOtherMath(AstExpr left) {
 		move();
-		Location loc = peek().location;
 		AstBinExpr.Oper operator = null;
 
 		switch (peek().token) {
@@ -325,7 +325,7 @@ public class SynAn implements AutoCloseable {
 		if (operator != null) {
 			AstExpr temp = parsePrefix();
 			AstExpr right = parseInnerOtherMath(temp);
-			return new AstBinExpr(loc, operator, left, right);
+			return new AstBinExpr(fromTo(left.location), operator, left, right);
 		}
 
 		return left;
@@ -354,7 +354,7 @@ public class SynAn implements AutoCloseable {
 		}
 
 		if (operator != null) {
-			return new AstPreExpr(loc, operator, parsePrefix());
+			return new AstPreExpr(fromTo(loc), operator, parsePrefix());
 		}
 
 		return parsePostfix();
@@ -367,16 +367,15 @@ public class SynAn implements AutoCloseable {
 
 	private AstExpr parseInnerPostfix(AstExpr left) {
 		move();
-		Location loc = peek().location;
 
 		switch (peek().token) {
 			case LEFT_BRACKET:
 				AstExpr temp = parseExpr();
 				checkExpected(Token.RIGHT_BRACKET);
-				AstExpr expr = new AstBinExpr(loc, AstBinExpr.Oper.ARR, left, temp);
+				AstExpr expr = new AstBinExpr(fromTo(left.location), AstBinExpr.Oper.ARR, left, temp);
 				return parseInnerPostfix(expr);
 			case POINTER:
-				expr = new AstPstExpr(loc, AstPstExpr.Oper.PTR, left);
+				expr = new AstPstExpr(fromTo(left.location), AstPstExpr.Oper.PTR, left);
 				return parseInnerPostfix(expr);
 			default:
 				dontMove = true;
@@ -399,13 +398,15 @@ public class SynAn implements AutoCloseable {
 			case VOID_CONST:
 				return new AstConstExpr(loc, AstConstExpr.Kind.VOID, peek().lexeme);
 			case IDENTIFIER:
-				return parseFuncCall(peek().lexeme);
+				return parseFuncCall(peek().lexeme, loc);
 			case NEW:
-				return new AstPreExpr(loc, AstPreExpr.Oper.NEW, parseExprWrapper());
+				AstExpr expr = parseExprWrapper();
+				return new AstPreExpr(fromTo(loc), AstPreExpr.Oper.NEW, expr);
 			case DEL:
-				return new AstPreExpr(loc, AstPreExpr.Oper.DEL, parseExprWrapper());
+				expr = parseExprWrapper();
+				return new AstPreExpr(fromTo(loc), AstPreExpr.Oper.DEL, expr);
 			case LEFT_BRACE:
-				AstStmtExpr stmtExpr = parseListOfStmts(loc);
+				AstStmtExpr stmtExpr = parseListOfStmts();
 				checkExpected(Token.RIGHT_BRACE);
 				return stmtExpr;
 			case LEFT_PARENTHESIS:
@@ -420,17 +421,16 @@ public class SynAn implements AutoCloseable {
 
 	private AstExpr parseExprEnd(AstExpr left) {
 		move();
-		Location loc = peek().location;
 
 		switch (peek().token) {
 			case COLON:
 				AstType type = parseType();
-				return new AstCastExpr(loc, left, type);
+				return new AstCastExpr(fromTo(left.location), left, type);
 			case WHERE:
 				Vector<AstDecl> declVector = new Vector<>();
 				parseDecls(declVector);
-				ASTs<AstDecl> decls = new ASTs<>(loc, declVector);
-				return new AstWhereExpr(loc, decls, left);
+				ASTs<AstDecl> decls = new ASTs<>(null, declVector);
+				return new AstWhereExpr(fromTo(left.location), decls, left);
 			default:
 				dontMove = true;
 		}
@@ -438,22 +438,21 @@ public class SynAn implements AutoCloseable {
 		return left;
 	}
 
-	private AstExpr parseFuncCall(String name) {
+	private AstExpr parseFuncCall(String name, Location loc) {
 		move();
-		Location loc = peek().location;
 
 		switch (peek().token) {
 			case LEFT_PARENTHESIS:
 				Vector<AstExpr> argsVector = new Vector<>();
 				parseCallParams(argsVector);
-				ASTs<AstExpr> args = new ASTs<>(loc, argsVector);
+				ASTs<AstExpr> args = new ASTs<>(null, argsVector);
 				checkExpected(Token.RIGHT_PARENTHESIS);
-				return new AstCallExpr(loc, name, args);
+				return new AstCallExpr(fromTo(loc), name, args);
 			default:
 				dontMove = true;
 		}
 
-		return new AstNameExpr(loc, name);
+		return new AstNameExpr(fromTo(loc), name);
 	}
 
 	private void parseCallParams(Vector<AstExpr> parentNode) {
@@ -495,13 +494,14 @@ public class SynAn implements AutoCloseable {
 		}
 	}
 
-	private AstStmtExpr parseListOfStmts(Location loc) {
+	private AstStmtExpr parseListOfStmts() {
+		Location loc = peek().location;
 		Vector<AstStmt> stmtsVector = new Vector<>();
 		parseStmt(stmtsVector);
 		parseOptionalStmts(stmtsVector);
-		ASTs<AstStmt> stmts = new ASTs<>(loc, stmtsVector);
+		ASTs<AstStmt> stmts = new ASTs<>(null, stmtsVector);
 
-		return new AstStmtExpr(loc, stmts);
+		return new AstStmtExpr(fromTo(loc), stmts);
 	}
 
 	private void parseStmt(Vector<AstStmt> parentNode) {
@@ -512,17 +512,22 @@ public class SynAn implements AutoCloseable {
 			case IF:
 				AstExpr expr = parseExpr();
 				checkExpected(Token.THEN);
-				AstExprStmt bodyStmt = new AstExprStmt(peek().location, parseListOfStmts(peek().location));
+				Location innerLoc = peek().location;
+				AstStmtExpr stmtList = parseListOfStmts();
+				AstExprStmt bodyStmt = new AstExprStmt(fromTo(innerLoc), stmtList);
+				innerLoc = peek().location;
 				AstStmtExpr endIf = parseIfEnd();
-				parentNode.add(new AstIfStmt(loc, expr, bodyStmt, endIf != null ? new AstExprStmt(loc, endIf) : null));
+				parentNode.add(new AstIfStmt(fromTo(loc), expr, bodyStmt, endIf != null ? new AstExprStmt(fromTo(innerLoc), endIf) : null));
 				break;
 			case WHILE:
 				expr = parseExpr();
 				checkExpected(Token.DO);
-				bodyStmt = new AstExprStmt(loc, parseListOfStmts(loc));
+				innerLoc = peek().location;
+				stmtList = parseListOfStmts();
+				bodyStmt = new AstExprStmt(fromTo(innerLoc), stmtList);
 				checkExpected(Token.END);
 				checkExpected(Token.SEMICOLON);
-				parentNode.add(new AstWhileStmt(loc, expr, bodyStmt));
+				parentNode.add(new AstWhileStmt(fromTo(loc), expr, bodyStmt));
 				break;
 			default:
 				dontMove = true;
@@ -549,15 +554,14 @@ public class SynAn implements AutoCloseable {
 
 	private AstStmt parseOptionalAssign(AstExpr expr) {
 		move();
-		Location loc = peek().location;
 
 		switch (peek().token) {
 			case SEMICOLON:
-				return new AstExprStmt(loc, expr);
+				return new AstExprStmt(fromTo(expr.location), expr);
 			case ASSIGN:
 				AstExpr expr2 = parseExpr();
 				checkExpected(Token.SEMICOLON);
-				return new AstAssignStmt(loc, expr, expr2);
+				return new AstAssignStmt(fromTo(expr.location), expr, expr2);
 			default:
 				throw new Report.Error(peek().location, String.format("Expected assignment or semicolon after expression, got: \"%s\"", peek().lexeme));
 		}
@@ -572,7 +576,7 @@ public class SynAn implements AutoCloseable {
 				checkExpected(Token.SEMICOLON);
 				return null;
 			case ELSE:
-				AstStmtExpr elseExpression = parseListOfStmts(loc);
+				AstStmtExpr elseExpression = parseListOfStmts();
 				checkExpected(Token.END);
 				checkExpected(Token.SEMICOLON);
 				return elseExpression;

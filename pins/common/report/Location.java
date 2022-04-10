@@ -96,4 +96,13 @@ public class Location implements Locatable {
 		return begLine + "." + begColumn + "-" + endLine + "." + endColumn;
 	}
 
+	/**
+	 * Constructs a new location given some other location
+	 * 
+	 * @param b An object location (later location)
+	 */
+	public Location join(Location b) {
+		return new Location(this.begLine, this.begColumn, b.endLine, b.endColumn);
+	}
+
 }
