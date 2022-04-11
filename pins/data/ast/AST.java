@@ -2,6 +2,7 @@ package pins.data.ast;
 
 import pins.common.logger.*;
 import pins.common.report.*;
+import pins.data.ast.visitor.AstVisitor;
 
 /**
  * An abstract syntax tree.
@@ -18,5 +19,6 @@ public abstract class AST implements Loggable {
 		this.location = location;
 		id = count++;
 	}
-
+	
+	public abstract <Result, Arg> Result accept(AstVisitor<Result, Arg> visitor, Arg arg);
 }

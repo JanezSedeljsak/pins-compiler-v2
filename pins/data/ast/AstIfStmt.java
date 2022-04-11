@@ -1,6 +1,7 @@
 package pins.data.ast;
 
 import pins.common.report.*;
+import pins.data.ast.visitor.AstVisitor;
 
 /**
  * A conditional statement.
@@ -33,6 +34,11 @@ public class AstIfStmt extends AstStmt {
 		condExpr.log(pfx + "  ");
 		thenBodyStmt.log(pfx + "  ");
 		if (elseBodyStmt != null) elseBodyStmt.log(pfx + "  ");
+	}
+
+	@Override
+	public <Result, Arg> Result accept(AstVisitor<Result, Arg> visitor, Arg arg) {
+		return visitor.visit(this, arg);
 	}
 
 }

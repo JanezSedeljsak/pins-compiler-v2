@@ -1,6 +1,7 @@
 package pins.data.ast;
 
 import pins.common.report.*;
+import pins.data.ast.visitor.AstVisitor;
 
 /**
  * An expression containing a list of declarations.
@@ -25,4 +26,9 @@ public class AstWhereExpr extends AstExpr {
 		subExpr.log(pfx + "  ");
 	}
 	
+	@Override
+	public <Result, Arg> Result accept(AstVisitor<Result, Arg> visitor, Arg arg) {
+		return visitor.visit(this, arg);
+	}
+
 }

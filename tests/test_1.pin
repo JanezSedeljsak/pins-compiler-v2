@@ -1,8 +1,3 @@
-typ x = char ;
-
-fun Add_(a: int, b: int) : int = {
-	if a == b then
-		result = a + b;
-		result;
-	end;
+fun main(): void = {
+  a = 1 + 2 + 3;
 };

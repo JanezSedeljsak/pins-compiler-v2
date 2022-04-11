@@ -200,8 +200,8 @@ public class SynAn implements AutoCloseable {
 		switch (peek().token) {
 			case OR:
 				AstExpr temp = parseAnd();
-				AstExpr right = parseInnerOr(temp);
-				return new AstBinExpr(fromTo(left.location), AstBinExpr.Oper.OR, left, right);
+				AstExpr expr = new AstBinExpr(fromTo(left.location), AstBinExpr.Oper.OR, left, temp);
+				return parseInnerOr(expr);
 			default:
 				dontMove = true;
 		}

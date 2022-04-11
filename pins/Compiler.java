@@ -5,12 +5,13 @@ import pins.common.report.*;
 import pins.data.ast.*;
 import pins.phase.lexan.*;
 import pins.phase.synan.*;
+import pins.phase.seman.*;
 
 /**
  * The PINS'22 compiler.
  */
 public class Compiler {
-
+		
 	/** All phases of the compiler. */
 	private static final String phases = "none|lexan|synan|abstr";
 
@@ -98,6 +99,15 @@ public class Compiler {
 					ast.log("");
 					break;
 				}
+				
+				// Semantic analysis.
+				/*try (SemAn seman = new SemAn()) {
+					ast.accept(new NameResolver(), null);
+				}
+				if (cmdLine.get("--target-phase").equals("seman")) {
+					ast.log("");
+					break;
+				}*/
 
 			}
 

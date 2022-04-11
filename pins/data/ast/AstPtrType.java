@@ -1,6 +1,7 @@
 package pins.data.ast;
 
 import pins.common.report.*;
+import pins.data.ast.visitor.AstVisitor;
 
 /**
  * A pointer type.
@@ -18,6 +19,11 @@ public class AstPtrType extends AstType {
 	public void log(String pfx) {
 		System.out.println(pfx + "\033[1mAstPtrType\033[0m @(" + location + ")");
 		subType.log(pfx + "  ");
+	}
+
+	@Override
+	public <Result, Arg> Result accept(AstVisitor<Result, Arg> visitor, Arg arg) {
+		return visitor.visit(this, arg);
 	}
 
 }

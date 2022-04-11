@@ -1,6 +1,7 @@
 package pins.data.ast;
 
 import pins.common.report.*;
+import pins.data.ast.visitor.AstVisitor;
 
 /**
  * A constant expression
@@ -24,6 +25,11 @@ public class AstConstExpr extends AstExpr {
 	@Override
 	public void log(String pfx) {
 		System.out.println(pfx + "\033[1mAstConstExpr(" + kind + "," + name + ")\033[0m @(" + location + ")");
+	}
+
+	@Override
+	public <Result, Arg> Result accept(AstVisitor<Result, Arg> visitor, Arg arg) {
+		return visitor.visit(this, arg);
 	}
 
 }

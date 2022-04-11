@@ -3,6 +3,7 @@ package pins.data.ast;
 import java.util.*;
 
 import pins.common.report.*;
+import pins.data.ast.visitor.AstVisitor;
 
 /**
  * A sequence of ASTs.
@@ -26,6 +27,11 @@ public class ASTs<AstKind extends AST> extends AST {
 		for (AstKind ast : asts) {
 			ast.log(pfx + "  ");
 		}
+	}
+
+	@Override
+	public <Result, Arg> Result accept(AstVisitor<Result, Arg> visitor, Arg arg) {
+		return visitor.visit(this, arg);
 	}
 
 }

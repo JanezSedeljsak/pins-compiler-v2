@@ -1,6 +1,7 @@
 package pins.data.ast;
 
 import pins.common.report.*;
+import pins.data.ast.visitor.AstVisitor;
 
 /**
  * An array type.
@@ -22,6 +23,11 @@ public class AstArrType extends AstType {
 		System.out.println(pfx + "\033[1mAstArrType\033[0m @(" + location + ")");
 		elemType.log(pfx + "  ");
 		size.log(pfx + "  ");
+	}
+
+	@Override
+	public <Result, Arg> Result accept(AstVisitor<Result, Arg> visitor, Arg arg) {
+		return visitor.visit(this, arg);
 	}
 
 }

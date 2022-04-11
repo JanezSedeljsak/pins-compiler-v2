@@ -1,6 +1,7 @@
 package pins.data.ast;
 
 import pins.common.report.*;
+import pins.data.ast.visitor.AstVisitor;
 
 /*
  * A function declaration.
@@ -24,6 +25,11 @@ public class AstFunDecl extends AstDecl {
 		pars.log(pfx + "  ");
 		type.log(pfx + "  ");
 		expr.log(pfx + "  ");
+	}
+
+	@Override
+	public <Result, Arg> Result accept(AstVisitor<Result, Arg> visitor, Arg arg) {
+		return visitor.visit(this, arg);
 	}
 
 }

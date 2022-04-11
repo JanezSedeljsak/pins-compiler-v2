@@ -1,6 +1,7 @@
 package pins.data.ast;
 
 import pins.common.report.*;
+import pins.data.ast.visitor.AstVisitor;
 
 /**
  * An assignment statement.
@@ -22,6 +23,11 @@ public class AstAssignStmt extends AstStmt {
 		System.out.println(pfx + "\033[1mAstAssignStmt\033[0m @(" + location + ")");
 		fstSubExpr.log(pfx + "  ");
 		sndSubExpr.log(pfx + "  ");
+	}
+
+	@Override
+	public <Result, Arg> Result accept(AstVisitor<Result, Arg> visitor, Arg arg) {
+		return visitor.visit(this, arg);
 	}
 
 }

@@ -1,6 +1,7 @@
 package pins.data.ast;
 
 import pins.common.report.*;
+import pins.data.ast.visitor.AstVisitor;
 
 /**
  * An expression containing a list of statements.
@@ -19,6 +20,11 @@ public class AstStmtExpr extends AstExpr {
 		System.out.println(pfx + "\033[1mAstStmtExpr\033[0m @(" + location + ")");
 		System.out.println(pfx + "  {Stmts}");
 		stmts.log(pfx + "    ");
+	}
+
+	@Override
+	public <Result, Arg> Result accept(AstVisitor<Result, Arg> visitor, Arg arg) {
+		return visitor.visit(this, arg);
 	}
 
 }
