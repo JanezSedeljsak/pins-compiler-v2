@@ -13,7 +13,7 @@ import pins.phase.seman.*;
 public class Compiler {
 		
 	/** All phases of the compiler. */
-	private static final String phases = "none|lexan|synan|abstr";
+	private static final String phases = "none|lexan|synan|abstr|seman";
 
 	/** Values of command line arguments. */
 	private static HashMap<String, String> cmdLine = new HashMap<String, String>();
@@ -101,13 +101,14 @@ public class Compiler {
 				}
 				
 				// Semantic analysis.
-				/*try (SemAn seman = new SemAn()) {
+				try (SemAn seman = new SemAn()) {
 					ast.accept(new NameResolver(), null);
+					Report.info("\n"+seman.toString());
 				}
 				if (cmdLine.get("--target-phase").equals("seman")) {
 					ast.log("");
 					break;
-				}*/
+				}
 
 			}
 
