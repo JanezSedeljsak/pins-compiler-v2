@@ -200,8 +200,8 @@ public class SynAn implements AutoCloseable {
 		switch (peek().token) {
 			case OR:
 				AstExpr temp = parseAnd();
-				AstExpr right = parseInnerOr(temp);
-				return new AstBinExpr(fromTo(left.location), AstBinExpr.Oper.OR, left, right);
+				AstExpr expr = new AstBinExpr(fromTo(left.location), AstBinExpr.Oper.OR, left, temp);
+				return parseInnerOr(expr);
 			default:
 				dontMove = true;
 		}
@@ -220,8 +220,8 @@ public class SynAn implements AutoCloseable {
 		switch (peek().token) {
 			case AND:
 				AstExpr temp = parseRelational();
-				AstExpr right = parseInnerAnd(temp);
-				return new AstBinExpr(fromTo(left.location), AstBinExpr.Oper.AND, left, right);
+				AstExpr expr = new AstBinExpr(fromTo(left.location), AstBinExpr.Oper.AND, left, temp);
+				return parseInnerAnd(expr);
 			default:
 				dontMove = true;
 		}
@@ -263,8 +263,8 @@ public class SynAn implements AutoCloseable {
 
 		if (operator != null) {
 			AstExpr temp = parseAddSub();
-			AstExpr right = parseInnerRelational(temp);
-			return new AstBinExpr(fromTo(left.location), operator, left, right);
+			AstExpr expr = new AstBinExpr(fromTo(left.location), operator, left, temp);
+			return parseInnerRelational(expr);
 		}
 
 		return left;
@@ -292,15 +292,15 @@ public class SynAn implements AutoCloseable {
 
 		if (operator != null) {
 			AstExpr temp = parseOtherMath();
-			AstExpr right = parseInnerAddSub(temp);
-			return new AstBinExpr(fromTo(left.location), operator, left, right);
+			AstExpr expr = new AstBinExpr(fromTo(left.location), operator, left, temp);
+			return parseInnerAddSub(expr);
 		}
 
 		return left;
 	}
 
 	private AstExpr parseOtherMath() {
-		AstExpr left =  parsePrefix();
+		AstExpr left =  parsePrefix(null);
 		return parseInnerOtherMath(left);
 	}
 
@@ -323,15 +323,15 @@ public class SynAn implements AutoCloseable {
 		}
 
 		if (operator != null) {
-			AstExpr temp = parsePrefix();
-			AstExpr right = parseInnerOtherMath(temp);
-			return new AstBinExpr(fromTo(left.location), operator, left, right);
+			AstExpr temp = parsePrefix(null);
+			AstExpr expr = new AstBinExpr(fromTo(left.location), operator, left, temp);
+			return parseInnerOtherMath(expr);
 		}
 
 		return left;
 	}
 
-	private AstExpr parsePrefix() {
+	private AstExpr parsePrefix(AstExpr left) {
 		move();
 		Location loc = peek().location;
 		AstPreExpr.Oper operator = null;
@@ -349,15 +349,23 @@ public class SynAn implements AutoCloseable {
 			case POINTER:
 				operator = AstPreExpr.Oper.PTR;
 				break;
+			case NEW:
+				operator = AstPreExpr.Oper.NEW;
+				break;
+			case DEL:
+				operator = AstPreExpr.Oper.DEL;
+				break;
 			default:
 				dontMove = true;
 		}
 
 		if (operator != null) {
-			return new AstPreExpr(fromTo(loc), operator, parsePrefix());
+			AstExpr temp = parsePrefix(null);
+			AstExpr expr = new AstPreExpr(fromTo(loc), operator, temp);
+			return parsePrefix(expr);
 		}
 
-		return parsePostfix();
+		return left == null ? parsePostfix() : left;
 	}
 
 	private AstExpr parsePostfix() {
@@ -399,12 +407,12 @@ public class SynAn implements AutoCloseable {
 				return new AstConstExpr(loc, AstConstExpr.Kind.VOID, peek().lexeme);
 			case IDENTIFIER:
 				return parseFuncCall(peek().lexeme, loc);
-			case NEW:
+			/*case NEW:
 				AstExpr expr = parseExprWrapper();
 				return new AstPreExpr(fromTo(loc), AstPreExpr.Oper.NEW, expr);
 			case DEL:
 				expr = parseExprWrapper();
-				return new AstPreExpr(fromTo(loc), AstPreExpr.Oper.DEL, expr);
+				return new AstPreExpr(fromTo(loc), AstPreExpr.Oper.DEL, expr);*/
 			case LEFT_BRACE:
 				AstStmtExpr stmtExpr = parseListOfStmts();
 				checkExpected(Token.RIGHT_BRACE);
@@ -569,7 +577,6 @@ public class SynAn implements AutoCloseable {
 
 	private AstStmtExpr parseIfEnd() {
 		move();
-		Location loc = peek().location;
 
 		switch (peek().token) {
 			case END:
