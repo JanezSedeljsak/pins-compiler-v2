@@ -103,7 +103,6 @@ public class Compiler {
 				// Semantic analysis.
 				try (SemAn seman = new SemAn()) {
 					ast.accept(new NameResolver(), null);
-					Report.info("\n"+seman.toString());
 				}
 				if (cmdLine.get("--target-phase").equals("seman")) {
 					ast.log("");

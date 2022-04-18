@@ -12,18 +12,16 @@ public class NameResolver<Result, Arg> extends AstFullVisitor<Result, Arg> {
     private boolean isRoot = true;
     
     @SuppressWarnings("unchecked")
-    private Result visitDeclarations(ASTs<? extends AST> decls, Arg arg) {
+    private void visitDeclarations(ASTs<? extends AST> decls, Arg arg) {
         for (AstDecl decl : (Collection<AstDecl>)decls.asts()) {
             if (decl == null) continue;
 
             try {
                 symbTable.ins(decl.name, decl);
             } catch (Exception e) {
-                throw new Report.Error(decl.location, String.format("%s is already declared in scope!", decl.name));
+                throw new Report.Error(decl.location, String.format("%s is already defined!", decl.name));
             }
         }
-        
-        return null;
     }
 
     //region insert into SymbTable
@@ -66,7 +64,7 @@ public class NameResolver<Result, Arg> extends AstFullVisitor<Result, Arg> {
         try {
             SemAn.declaredAt.put(callExpr, symbTable.fnd(callExpr.name));
         } catch (CannotFndNameException e) {
-            throw new Report.Error(callExpr.location, String.format("function -> %s is not declared!", callExpr.name));
+            throw new Report.Error(callExpr.location, String.format("function %s is not defined!", callExpr.name));
         }
 
         if (callExpr.args != null)
@@ -79,7 +77,7 @@ public class NameResolver<Result, Arg> extends AstFullVisitor<Result, Arg> {
         try {
             SemAn.declaredAt.put(nameExpr, symbTable.fnd(nameExpr.name));
         } catch (CannotFndNameException e) {
-            throw new Report.Error(nameExpr.location, String.format("name -> %s is not declared!", nameExpr.name));
+            throw new Report.Error(nameExpr.location, String.format("variable %s is not defined!", nameExpr.name));
         }
         return null;
     }
@@ -89,7 +87,7 @@ public class NameResolver<Result, Arg> extends AstFullVisitor<Result, Arg> {
         try {
             SemAn.declaredAt.put(typeName, symbTable.fnd(typeName.name));
         } catch (CannotFndNameException e) {
-            throw new Report.Error(typeName.location, String.format("type -> %s is not declared!", typeName.name));
+            throw new Report.Error(typeName.location, String.format("type %s is not defined!", typeName.name));
         }
         return null;
     }
