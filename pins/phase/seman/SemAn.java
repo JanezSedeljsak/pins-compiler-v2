@@ -10,7 +10,7 @@ public class SemAn implements AutoCloseable {
 	/** Maps names to declarations. */
 	public static final HashMap<AstName, AstDecl> declaredAt = new HashMap<AstName, AstDecl>();
 
-	public SemAn() {		
+	public SemAn() {
 	}
 	
 	public void close() {
@@ -18,6 +18,8 @@ public class SemAn implements AutoCloseable {
 
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
+		Vector<String> output = new Vector<>();
+
 		for (AstName astName : SemAn.declaredAt.keySet()) {
 			Location loc = new Location(-1, -1);
 			String name = "";
@@ -37,9 +39,11 @@ public class SemAn implements AutoCloseable {
 			}
 
 			AstDecl decl = SemAn.declaredAt.get(astName);
-			sb.append(String.format("\033[1m(%-5s)\033[0m @(%-9s) => \033[1m(%-5s)\033[0m @(%-9s)\n", name, loc, decl.name, decl.location));
+			output.add(String.format("\033[1m(%-5s)\033[0m @(%-9s) => \033[1m(%-5s)\033[0m @(%-9s)\n", name, loc, decl.name, decl.location));
 		}
 
+		Collections.sort(output);
+		output.forEach(str -> sb.append(str));
 		return sb.toString();
 	}
 

@@ -1,6 +1,6 @@
 package pins.phase.seman;
 
-import java.util.Vector;
+import java.util.Collection;
 import pins.data.ast.visitor.*;
 import pins.phase.seman.SymbTable.CannotFndNameException;
 import pins.common.report.Report;
@@ -10,54 +10,41 @@ public class NameResolver<Result, Arg> extends AstFullVisitor<Result, Arg> {
 
     private final SymbTable symbTable = new SymbTable();
     private boolean isRoot = true;
-
-    @Override
+    
     @SuppressWarnings("unchecked")
+    private Result visitDeclarations(ASTs<? extends AST> decls, Arg arg) {
+        for (AstDecl decl : (Collection<AstDecl>)decls.asts()) {
+            if (decl == null) continue;
+
+            try {
+                symbTable.ins(decl.name, decl);
+            } catch (Exception e) {
+                throw new Report.Error(decl.location, String.format("%s is already declared in scope!", decl.name));
+            }
+        }
+        
+        return null;
+    }
+
+    //region insert into SymbTable
+    @Override
     public Result visit(ASTs<? extends AST> trees, Arg arg) {
         if (isRoot) {
             isRoot = false;
-            rootVisit((Vector<AstDecl>) trees.asts(), arg);
-            return null;
+            symbTable.newScope();
+            visitDeclarations(trees, arg);
+            Result res = super.visit(trees, arg);
+            symbTable.oldScope();
+            return res;
         }
 
         return super.visit(trees, arg);
     }
 
-    //region insert into SymbTable
-    private Result rootVisit(Vector<AstDecl> decls, Arg arg) {
-        symbTable.newScope();
-        for (AstDecl decl : decls) {
-            if (decl == null) continue;
-
-            try {
-                symbTable.ins(decl.name, decl);
-            } catch (Exception e) {
-                throw new Report.Error(decl.location, String.format("%s is already declared in scope!", decl.name));
-            }
-        }
-
-        for (AstDecl decl : decls) {
-            if (decl == null) continue;
-            decl.accept(this, arg);
-        }
-
-        symbTable.oldScope();
-        return null;
-    }
-
     @Override
 	public Result visit(AstFunDecl funDecl, Arg arg) {
         symbTable.newScope();
-        for (AstParDecl decl : funDecl.pars.asts()) {
-            if (decl == null) continue;
-
-            try {
-                symbTable.ins(decl.name, decl);
-            } catch (Exception e) {
-                throw new Report.Error(decl.location, String.format("%s is already declared in scope!", decl.name));
-            }
-        }
-
+        visitDeclarations(funDecl.pars, arg);
 		Result res = super.visit(funDecl, arg);
         symbTable.oldScope();
 		return res;
@@ -66,16 +53,7 @@ public class NameResolver<Result, Arg> extends AstFullVisitor<Result, Arg> {
     @Override
 	public Result visit(AstWhereExpr whereExpr, Arg arg) {
         symbTable.newScope();
-        for (AstDecl decl : whereExpr.decls.asts()) {
-            if (decl == null) continue;
-
-            try {
-                symbTable.ins(decl.name, decl);
-            } catch (Exception e) {
-                throw new Report.Error(decl.location, String.format("%s is already declared in scope!", decl.name));
-            }
-        }
-
+        visitDeclarations(whereExpr.decls, arg);
 		Result res = super.visit(whereExpr, arg);
         symbTable.oldScope();
 		return res;
