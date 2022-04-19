@@ -2,7 +2,7 @@ var i: t1;
 
 fun t(j: int): void = ({
   i + j * k;
-  (i : integer);
+  t(k, itt);
 } where var i: t1; var k: t2; typ _int = int;);
 
 typ t1 = t2;

@@ -19,7 +19,7 @@ public class NameResolver<Result, Arg> extends AstFullVisitor<Result, Arg> {
             try {
                 symbTable.ins(decl.name, decl);
             } catch (Exception e) {
-                throw new Report.Error(decl.location, String.format("%s is already defined!", decl.name));
+                throw new Report.Error(decl.location, String.format("%s is already declared in this scope", decl.name));
             }
         }
     }
@@ -58,13 +58,13 @@ public class NameResolver<Result, Arg> extends AstFullVisitor<Result, Arg> {
 	}
     //endregion
 
-    //region insert into DeclaredAt 
+    //region insert into DeclaredAt
     @Override
     public Result visit(AstCallExpr callExpr, Arg arg) {
         try {
             SemAn.declaredAt.put(callExpr, symbTable.fnd(callExpr.name));
         } catch (CannotFndNameException e) {
-            throw new Report.Error(callExpr.location, String.format("function %s is not defined!", callExpr.name));
+            throw new Report.Error(callExpr.location, String.format("function %s was not declared in this scope!", callExpr.name));
         }
 
         if (callExpr.args != null)
@@ -77,7 +77,7 @@ public class NameResolver<Result, Arg> extends AstFullVisitor<Result, Arg> {
         try {
             SemAn.declaredAt.put(nameExpr, symbTable.fnd(nameExpr.name));
         } catch (CannotFndNameException e) {
-            throw new Report.Error(nameExpr.location, String.format("variable %s is not defined!", nameExpr.name));
+            throw new Report.Error(nameExpr.location, String.format("variable %s was not declared in this scope!", nameExpr.name));
         }
         return null;
     }
@@ -87,7 +87,7 @@ public class NameResolver<Result, Arg> extends AstFullVisitor<Result, Arg> {
         try {
             SemAn.declaredAt.put(typeName, symbTable.fnd(typeName.name));
         } catch (CannotFndNameException e) {
-            throw new Report.Error(typeName.location, String.format("type %s is not defined!", typeName.name));
+            throw new Report.Error(typeName.location, String.format("type %s was not declared in this scope!", typeName.name));
         }
         return null;
     }
