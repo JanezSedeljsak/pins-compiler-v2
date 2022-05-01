@@ -19,7 +19,7 @@ public class Compiler {
 	private static HashMap<String, String> cmdLine = new HashMap<String, String>();
 
 	public static void main(String[] args) {
-
+		
 		try {
 			Report.info("This is the PINS'22 compiler:");
 
@@ -102,7 +102,8 @@ public class Compiler {
 				
 				// Semantic analysis.
 				try (SemAn seman = new SemAn()) {
-					ast.accept(new NameResolver(), null);
+					ast.accept(new NameResolver<>(), null);
+					ast.accept(new TypeChecker<>(), null);
 				}
 				if (cmdLine.get("--target-phase").equals("seman")) {
 					ast.log("");

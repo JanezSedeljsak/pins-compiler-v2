@@ -15,6 +15,7 @@ public class AstParDecl extends AstDecl {
 	@Override
 	public void log(String pfx) {
 		System.out.println(pfx + "\033[1mAstParDecl(" + name + ")\033[0m @(" + location + ")");
+		logAttributes(pfx);
 		type.log(pfx + "  ");
 	}
 

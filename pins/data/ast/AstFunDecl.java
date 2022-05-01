@@ -21,6 +21,7 @@ public class AstFunDecl extends AstDecl {
 	@Override
 	public void log(String pfx) {
 		System.out.println(pfx + "\033[1mAstFunDecl(" + name + ")\033[0m @(" + location + ")");
+		logAttributes(pfx);
 		System.out.println(pfx + "  {Pars}");
 		pars.log(pfx + "  ");
 		type.log(pfx + "  ");

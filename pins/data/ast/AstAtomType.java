@@ -22,6 +22,7 @@ public class AstAtomType extends AstType {
 	@Override
 	public void log(String pfx) {
 		System.out.println(pfx + "\033[1mAstAtomType(" + kind + ")\033[0m @(" + location + ")");
+		logAttributes(pfx);
 	}
 
 	@Override

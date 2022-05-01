@@ -1,50 +1,30 @@
 package pins.phase.seman;
 
 import java.util.*;
-
-import pins.common.report.Location;
 import pins.data.ast.*;
+import pins.data.typ.*;
 
 public class SemAn implements AutoCloseable {
 
 	/** Maps names to declarations. */
 	public static final HashMap<AstName, AstDecl> declaredAt = new HashMap<AstName, AstDecl>();
 
-	public SemAn() {
+	/** Maps type declarations to semantic representations of types. */
+	public static final HashMap<AstTypDecl, SemName> declaresType = new HashMap<AstTypDecl, SemName>(0);
+
+	/** Maps syntax types to semantic representations of types. */
+	public static final HashMap<AstType, SemType> describesType = new HashMap<AstType, SemType>(0);
+
+	/** Maps expressions to semantic representations of types. */
+	public static final HashMap<AstExpr, SemType> exprOfType = new HashMap<AstExpr, SemType>(0);
+
+	/** Maps statements to semantic representations of types. */
+	public static final HashMap<AstStmt, SemType> stmtOfType = new HashMap<AstStmt, SemType>(0);
+	
+	public SemAn() {		
 	}
 	
 	public void close() {
-	}
-
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		Vector<String> output = new Vector<>();
-
-		for (AstName astName : SemAn.declaredAt.keySet()) {
-			Location loc = new Location(-1, -1);
-			String name = "";
-
-			if (astName instanceof AstCallExpr) {
-				AstCallExpr temp = (AstCallExpr)astName;
-				loc = temp.location;
-				name = temp.name;
-			} else if (astName instanceof AstNameExpr) {
-				AstNameExpr temp = (AstNameExpr)astName;
-				loc = temp.location;
-				name = temp.name;
-			} else if (astName instanceof  AstTypeName) {
-				AstTypeName temp = (AstTypeName)astName;
-				loc = temp.location;
-				name = temp.name;
-			}
-
-			AstDecl decl = SemAn.declaredAt.get(astName);
-			output.add(String.format("\033[1m(%-5s)\033[0m @(%-9s) => \033[1m(%-5s)\033[0m @(%-9s)\n", name, loc, decl.name, decl.location));
-		}
-
-		Collections.sort(output);
-		output.forEach(str -> sb.append(str));
-		return sb.toString();
 	}
 
 }

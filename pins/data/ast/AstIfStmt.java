@@ -31,6 +31,7 @@ public class AstIfStmt extends AstStmt {
 	@Override
 	public void log(String pfx) {
 		System.out.println(pfx + "\033[1mAstIfStmt\033[0m @(" + location + ")");
+		logAttributes(pfx);
 		condExpr.log(pfx + "  ");
 		thenBodyStmt.log(pfx + "  ");
 		if (elseBodyStmt != null) elseBodyStmt.log(pfx + "  ");

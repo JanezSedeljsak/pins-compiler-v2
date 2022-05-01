@@ -21,6 +21,7 @@ public class AstWhereExpr extends AstExpr {
 	@Override
 	public void log(String pfx) {
 		System.out.println(pfx + "\033[1mAstWhereExpr\033[0m @(" + location + ")");
+		logAttributes(pfx);
 		System.out.println(pfx + "  {Decls}");
 		decls.log(pfx + "    ");
 		subExpr.log(pfx + "  ");

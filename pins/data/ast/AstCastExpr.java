@@ -21,6 +21,7 @@ public class AstCastExpr extends AstExpr {
 	@Override
 	public void log(String pfx) {
 		System.out.println(pfx + "\033[1mAstCastExpr\033[0m @(" + location + ")");
+		logAttributes(pfx);
 		subExpr.log(pfx + "  ");
 		type.log(pfx + "  ");
 	}

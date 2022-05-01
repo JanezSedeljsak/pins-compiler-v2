@@ -25,6 +25,7 @@ public class AstConstExpr extends AstExpr {
 	@Override
 	public void log(String pfx) {
 		System.out.println(pfx + "\033[1mAstConstExpr(" + kind + "," + name + ")\033[0m @(" + location + ")");
+		logAttributes(pfx);
 	}
 
 	@Override

@@ -18,6 +18,7 @@ public class AstStmtExpr extends AstExpr {
 	@Override
 	public void log(String pfx) {
 		System.out.println(pfx + "\033[1mAstStmtExpr\033[0m @(" + location + ")");
+		logAttributes(pfx);
 		System.out.println(pfx + "  {Stmts}");
 		stmts.log(pfx + "    ");
 	}

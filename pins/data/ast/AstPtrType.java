@@ -18,6 +18,7 @@ public class AstPtrType extends AstType {
 	@Override
 	public void log(String pfx) {
 		System.out.println(pfx + "\033[1mAstPtrType\033[0m @(" + location + ")");
+		logAttributes(pfx);
 		subType.log(pfx + "  ");
 	}
 

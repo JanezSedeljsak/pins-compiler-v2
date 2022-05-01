@@ -28,6 +28,7 @@ public class AstBinExpr extends AstExpr {
 	@Override
 	public void log(String pfx) {
 		System.out.println(pfx + "\033[1mAstBinExpr(" + oper + ")\033[0m @(" + location + ")");
+		logAttributes(pfx);
 		fstSubExpr.log(pfx + "  ");
 		sndSubExpr.log(pfx + "  ");
 	}

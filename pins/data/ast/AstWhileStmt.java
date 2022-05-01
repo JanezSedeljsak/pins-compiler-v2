@@ -21,6 +21,7 @@ public class AstWhileStmt extends AstStmt {
 	@Override
 	public void log(String pfx) {
 		System.out.println(pfx + "\033[1mAstWhileStmt\033[0m @(" + location + ")");
+		logAttributes(pfx);
 		condExpr.log(pfx + "  ");
 		bodyStmt.log(pfx + "  ");
 	}
