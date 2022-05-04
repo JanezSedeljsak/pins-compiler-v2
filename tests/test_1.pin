@@ -4,7 +4,7 @@ typ char_ptr2 = char_ptr;
 
 fun main(): int = {
   chr = ^get_char('b');
-  num^ = 5 - 4;
+  num^ = nums[2] - 4;
   add(num^, 3);
 };
 
@@ -12,5 +12,6 @@ fun get_char(x: char): char_ptr = (x : char_ptr);
 
 var chr: char_ptr2;
 var num: int_ptr;
+var nums: [5]int;
 
 fun add(a: int, b: int): int = a + b;

@@ -5,7 +5,6 @@ fun main(i:int):void = {
 			i = i-1; 
 			main(i); 
 		end; 
-	end; 
+	end;
 	none;
-	0;
 };

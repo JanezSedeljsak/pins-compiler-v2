@@ -12,8 +12,7 @@ import pins.data.ast.visitor.AstFullVisitor;
 public class TypeChecker extends AstFullVisitor<SemType, Object> {
 
     private boolean isRoot = true;
-
-    // done
+  
     private static boolean validateTwoTypes(SemType t1, SemType t2) {
         if (t1 == null || t2 == null) {
             throw new Report.InternalError();
@@ -29,8 +28,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 
         return t1.getClass().equals(t2.getClass());
     }
-
-    // done
+   
     private static String stype(SemType type, boolean topLevel) {
         type = type.actualType();
         if (type instanceof SemArr) {
@@ -57,7 +55,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
         return stype(type, true);
     }
 
-    // done
+    
     private static boolean validateType(SemType type) {
         Set<String> seenNames = new HashSet<>();
         if (type instanceof SemName) {
@@ -81,8 +79,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
     enum TypeHandlePhase {
         ADD, DEFINE, VALIDATE
     };
-
-    // done
+    
     @SuppressWarnings("unchecked")
     private void handleTypes(ASTs<? extends AST> decls, Object arg) {
         Vector<AstDecl> declerationVector = (Vector<AstDecl>)decls.asts();
@@ -90,8 +87,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
         handleTypesWithPhase(declerationVector, TypeHandlePhase.DEFINE);
         handleTypesWithPhase(declerationVector, TypeHandlePhase.VALIDATE);
     }
-
-    // done
+    
     private void handleTypesWithPhase(Vector<AstDecl> decls, TypeHandlePhase phase) {
         for (AstDecl decl : decls) {
             if (decl == null || !(decl instanceof AstTypDecl)) continue;
@@ -114,8 +110,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
             }
         }
     }
-
-    // done
+    
     private SemType visitASTs(ASTs<? extends AST> trees, Object arg) {
         SemType lastAstType = null;
         for (AST t : trees.asts()) {
@@ -127,8 +122,6 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
         return lastAstType;
     }
     
-
-    // done
     @Override
     public SemType visit(ASTs<? extends AST> trees, Object arg) {
         if (isRoot) {
@@ -140,23 +133,22 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 
         return visitASTs(trees, arg);
     }
-
-    // done
+    
     @Override
 	public SemType visit(AstWhereExpr whereExpr, Object arg) {
         handleTypes(whereExpr.decls, arg);
         SemType type = null;
 
+        if (whereExpr.decls != null)
+			whereExpr.decls.accept(this, arg);
 		if (whereExpr.subExpr != null)
 			type = whereExpr.subExpr.accept(this, arg);
-		if (whereExpr.decls != null)
-			whereExpr.decls.accept(this, arg);
+		
 
         SemAn.exprOfType.put(whereExpr, type);
 		return type;
 	}
-
-    // done
+    
     @Override
 	public SemType visit(AstFunDecl funDecl, Object arg) {
         SemType exprType = null, definedType = null;
@@ -168,7 +160,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 		if (funDecl.expr != null)
             exprType = funDecl.expr.accept(this, arg);
 
-        if (definedType instanceof SemArr) {
+        if (definedType.actualType() instanceof SemArr) {
             throw new Report.Error("Function can not return type Array");
         }
 
@@ -178,8 +170,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
         
 		return definedType;
 	}
-
-    // done
+    
 	@Override
 	public SemType visit(AstParDecl parDecl, Object arg) {
         SemType type = null;
@@ -187,14 +178,13 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 		if (parDecl.type != null)
 			type = parDecl.type.accept(this, arg);
 
-        if (type.actualType() instanceof SemArr) {
-            throw new Report.Error(parDecl.location, "Function params can't be of type ARR");
+        if (type.actualType() instanceof SemArr || type.actualType() instanceof SemVoid) {
+            throw new Report.Error(parDecl.location, "Function params of type ARR or VOID are not allowed");
         }
 
 		return type;
 	}
-
-    // done
+    
 	@Override
 	public SemType visit(AstTypDecl typDecl, Object arg) {
 		if (typDecl.type != null)
@@ -202,8 +192,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 
         return null;
 	}
-
-    // done
+    
 	@Override
 	public SemType visit(AstVarDecl varDecl, Object arg) {
 		if (varDecl.type != null)
@@ -213,8 +202,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 	}
 
 	// EXPRESSIONS
-
-    // done
+    
 	@Override
 	public SemType visit(AstBinExpr binExpr, Object arg) {
         SemType t1 = null, t2 = null;
@@ -264,12 +252,11 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 		return t1;
 	}
 
-    // todo (arg types check)
 	@Override
 	public SemType visit(AstCallExpr callExpr, Object arg) {
         AstFunDecl decl = (AstFunDecl) SemAn.declaredAt.get(callExpr);
-        SemType type = decl.type.accept(this, arg).actualType();
-        if (type instanceof SemArr) {
+        SemType type = decl.type.accept(this, arg);
+        if (type.actualType() instanceof SemArr) {
             throw new Report.Error("Function can not return type Array");
         }
 
@@ -286,7 +273,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
                 SemType sentType = SemAn.exprOfType.get(sentParams.get(i));
                 SemType requiredParamType =  declaredParams.get(i).accept(this, arg);
                 if (!validateTwoTypes(requiredParamType, sentType)) {
-                    throw new Report.Error(callExpr.location, String.format("[%d-th] params should be of type %s got %s!", i, stype(requiredParamType), stype(sentType)));
+                    throw new Report.Error(callExpr.location, String.format("[%d-th] param should be of type %s got %s!", i, stype(requiredParamType), stype(sentType)));
                 }
             }
         }
@@ -296,7 +283,6 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 		return type;
 	}
 
-    // done
 	@Override
 	public SemType visit(AstCastExpr castExpr, Object arg) {
         SemType t1 = null, t2 = null;
@@ -320,8 +306,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
         SemAn.exprOfType.put(castExpr, t2);
 		return t2;
 	}
-
-    // done
+    
 	@Override
 	public SemType visit(AstConstExpr constExpr, Object arg) {
 		SemType type = null;
@@ -345,7 +330,6 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
         return type;
 	}
 
-    // done
 	@Override
 	public SemType visit(AstNameExpr nameExpr, Object arg) {
 		AstDecl decl = SemAn.declaredAt.get(nameExpr);
@@ -357,8 +341,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
         SemAn.exprOfType.put(nameExpr, type);
 		return type;
 	}
-
-    // done
+    
 	@Override
 	public SemType visit(AstPreExpr preExpr, Object arg) {
         SemType type = null, resultType = null;
@@ -368,6 +351,9 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
         
         switch (preExpr.oper) {
             case NEW:
+                if (!(type.actualType() instanceof SemInt)) {
+                    throw new Report.Error(preExpr.location, String.format("Type when using [new] has to be INT got %s", stype(type)));
+                }
                 resultType = new SemPtr(new SemVoid());
                 break;
             case DEL:
@@ -392,8 +378,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
         SemAn.exprOfType.put(preExpr, resultType);
 		return resultType;
 	}
-
-    // done
+    
 	@Override
 	public SemType visit(AstPstExpr pstExpr, Object arg) {
         SemType type = null;
@@ -410,8 +395,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
         SemAn.exprOfType.put(pstExpr, pointerOfType);
 		return pointerOfType;
 	}
-
-    // done
+    
 	@Override
 	public SemType visit(AstStmtExpr stmtExpr, Object arg) {
         SemType type = null;
@@ -424,8 +408,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 	}
 
 	// STATEMENTS
-
-    // done
+    
 	@Override
 	public SemType visit(AstAssignStmt assignStmt, Object arg) {
         SemType t1 = null, t2 = null;
@@ -435,6 +418,14 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 		if (assignStmt.sndSubExpr != null)
 			t2 = assignStmt.sndSubExpr.accept(this, arg);
 
+        if (t1.actualType() instanceof SemArr || t1.actualType() instanceof SemVoid) {
+            throw new Report.Error(assignStmt.location, String.format("You can only assign to PTR, INT, CHAR got %s", stype(t1)));
+        }
+
+        if (t2.actualType() instanceof SemArr || t2.actualType() instanceof SemVoid) {
+            throw new Report.Error(assignStmt.location, String.format("You can only assign type PTR, INT, CHAR got %s", stype(t2)));
+        }
+
         if (!validateTwoTypes(t1, t2)) {
             throw new Report.Error(assignStmt.location, String.format("Cannot assign type %s to variable of type %s", stype(t2), stype(t1)));
         }
@@ -442,8 +433,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
         SemAn.stmtOfType.put(assignStmt, new SemVoid());
 		return new SemVoid();
 	}
-
-    // done
+    
 	@Override
 	public SemType visit(AstExprStmt exprStmt, Object arg) {
         SemType type = null;
@@ -454,18 +444,27 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
         SemAn.stmtOfType.put(exprStmt, type);
 		return type;
 	}
-
-    // done
+    
 	@Override
 	public SemType visit(AstIfStmt ifStmt, Object arg) {
         SemType condition = null;
 
 		if (ifStmt.condExpr != null)
 			condition = ifStmt.condExpr.accept(this, arg);
-		if (ifStmt.thenBodyStmt != null)
-			ifStmt.thenBodyStmt.accept(this, arg);
-		if (ifStmt.elseBodyStmt != null)
-			ifStmt.elseBodyStmt.accept(this, arg);
+
+		if (ifStmt.thenBodyStmt != null) {
+            SemType type = ifStmt.thenBodyStmt.accept(this, arg);
+            if (!(type.actualType() instanceof SemVoid)) {
+                throw new Report.Error(ifStmt.thenBodyStmt.location, String.format("stmts in IF block have to be type VOID got %s", stype(type)));
+            }
+        }
+
+		if (ifStmt.elseBodyStmt != null) {
+            SemType type = ifStmt.elseBodyStmt.accept(this, arg);
+            if (!(type.actualType() instanceof SemVoid)) {
+                throw new Report.Error(ifStmt.elseBodyStmt.location, String.format("stmts in ELSE block have to be type VOID got %s", stype(type)));
+            }
+        }
 
         if (condition == null || !(condition.actualType() instanceof SemInt)) {
             throw new Report.Error(ifStmt.condExpr.location, "Condition expression in IF stmt should be of type INT");
@@ -474,16 +473,19 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
         SemAn.stmtOfType.put(ifStmt, new SemVoid());
 		return new SemVoid();
 	}
-
-    // done
+    
 	@Override
 	public SemType visit(AstWhileStmt whileStmt, Object arg) {
         SemType condition = null;
 
 		if (whileStmt.condExpr != null)
 			condition = whileStmt.condExpr.accept(this, arg);
-		if (whileStmt.bodyStmt != null)
-			whileStmt.bodyStmt.accept(this, arg);
+		if (whileStmt.bodyStmt != null) {
+            SemType type = whileStmt.bodyStmt.accept(this, arg);
+            if (!(type.actualType() instanceof SemVoid)) {
+                throw new Report.Error(whileStmt.bodyStmt.location, String.format("stmts in WHILE block have to be type VOID got %s", stype(type)));
+            }
+        }
 
         if (condition == null || !(condition.actualType() instanceof SemInt)) {
             throw new Report.Error(whileStmt.condExpr.location, "Condition expression in WHILE stmt should be of type INT");
@@ -494,8 +496,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 	}
 
 	// TYPES
-
-    // done
+    
 	@Override
 	public SemType visit(AstArrType arrType, Object arg) {
         SemType elemType = null;
@@ -505,6 +506,10 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 			elemType = arrType.elemType.accept(this, arg);
 		if (arrType.size != null)
             arrType.size.accept(this, arg);
+        
+        if (elemType.actualType() instanceof SemVoid) {
+            throw new Report.Error(arrType.location, "Array does not support items of type VOID");
+        }
 
         if (!(arrType.size instanceof AstConstExpr)) {
             throw new Report.Error(arrType.location, constExprError);
@@ -519,8 +524,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
         SemAn.describesType.put(arrType, type);
         return type;
 	}
-
-    // done
+    
 	@Override
 	public SemType visit(AstAtomType atomType, Object arg) {
         SemType type = null;
@@ -540,8 +544,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
         SemAn.describesType.put(atomType, type);
         return type;
 	}
-
-    // done
+    
 	@Override
 	public SemType visit(AstPtrType ptrType, Object arg) {
 		SemType baseType = null;
@@ -553,8 +556,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
         SemAn.describesType.put(ptrType, type);
         return type;
 	}
-
-    // done
+    
 	@Override
 	public SemType visit(AstTypeName typeName, Object arg) {
 		AstDecl decl = SemAn.declaredAt.get(typeName);
