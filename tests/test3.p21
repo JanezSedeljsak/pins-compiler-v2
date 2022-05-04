@@ -7,4 +7,5 @@ fun main(i:int):void = {
 		end; 
 	end; 
 	none;
+	0;
 };

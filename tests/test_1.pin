@@ -1,11 +1,16 @@
-typ t1 = [5]int;
-typ t2 = ^t1;
-typ ptr = ^int;
+typ int_ptr = ^int;
+typ char_ptr = ^char;
+typ char_ptr2 = char_ptr;
 
-fun main(x: int): int = {
-  num^ = -543 + 40;
-  40 != num^;
+fun main(): int = {
+  chr = ^get_char('b');
+  num^ = 5 - 4;
+  add(num^, 3);
 };
 
-var num: ptr;
+fun get_char(x: char): char_ptr = (x : char_ptr);
 
+var chr: char_ptr2;
+var num: int_ptr;
+
+fun add(a: int, b: int): int = a + b;

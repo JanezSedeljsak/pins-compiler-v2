@@ -2,7 +2,7 @@ package pins.phase.seman;
 
 import pins.data.typ.*;
 
-import java.util.Collection;
+import java.util.*;
 
 import pins.common.report.Report;
 import pins.data.ast.*;
@@ -13,7 +13,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 
     private boolean isRoot = true;
 
-    // mostly
+    // done
     private static boolean validateTwoTypes(SemType t1, SemType t2) {
         if (t1 == null || t2 == null) {
             throw new Report.InternalError();
@@ -31,13 +31,87 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
     }
 
     // done
+    private static String stype(SemType type, boolean topLevel) {
+        type = type.actualType();
+        if (type instanceof SemArr) {
+            SemArr arrType = (SemArr)type;
+            return String.format("%s[%d]", stype(arrType.elemType, false), arrType.numElems);
+        }
+
+        if (type instanceof SemChar) return String.format("CHAR");
+        if (type instanceof SemInt) return String.format("INT");
+        if (type instanceof SemPtr) {
+            SemPtr ptrType = (SemPtr)type;
+            if (topLevel) {
+                return String.format("PTR(%s)", stype(ptrType.baseType, false));
+            } else {
+                return String.format("PTR");
+            }
+        }
+
+        if (type instanceof SemVoid) return String.format("VOID");
+        return "/";
+    }
+
+    private static String stype(SemType type) {
+        return stype(type, true);
+    }
+
+    // done
+    private static boolean validateType(SemType type) {
+        Set<String> seenNames = new HashSet<>();
+        if (type instanceof SemName) {
+            SemName nameDef = null;
+            while (type instanceof SemName) {
+                nameDef = (SemName)type;
+                if (seenNames.contains(nameDef.name)) {
+                    return false;
+                }
+
+                seenNames.add(nameDef.name);
+                type = nameDef.type();
+            }
+
+            return true;
+        }
+
+        return true;
+    }
+
+    enum TypeHandlePhase {
+        ADD, DEFINE, VALIDATE
+    };
+
+    // done
     @SuppressWarnings("unchecked")
-    private void visitDeclarations(ASTs<? extends AST> decls, Object arg) {
-        for (AstDecl decl : (Collection<AstDecl>)decls.asts()) {
+    private void handleTypes(ASTs<? extends AST> decls, Object arg) {
+        Vector<AstDecl> declerationVector = (Vector<AstDecl>)decls.asts();
+        handleTypesWithPhase(declerationVector, TypeHandlePhase.ADD);
+        handleTypesWithPhase(declerationVector, TypeHandlePhase.DEFINE);
+        handleTypesWithPhase(declerationVector, TypeHandlePhase.VALIDATE);
+    }
+
+    // done
+    private void handleTypesWithPhase(Vector<AstDecl> decls, TypeHandlePhase phase) {
+        for (AstDecl decl : decls) {
             if (decl == null || !(decl instanceof AstTypDecl)) continue;
             
             AstTypDecl typDecl = (AstTypDecl)decl;
-            SemAn.declaresType.put(typDecl, new SemName(typDecl.name));
+            switch (phase) {
+                case ADD:
+                    SemAn.declaresType.put(typDecl, new SemName(typDecl.name));
+                    break;
+                case DEFINE:
+                    SemType type = typDecl.type.accept(this, null);
+                    SemAn.declaresType.get(typDecl).define(type);
+                    break;
+                case VALIDATE:
+                    type = typDecl.type.accept(this, null);
+                    if (!validateType(type)) {
+                        throw new Report.Error(typDecl.location, String.format("Type decleration of (%s) has an inifinite loop in the definition", typDecl.name));
+                    }
+                    break;
+            }
         }
     }
 
@@ -59,7 +133,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
     public SemType visit(ASTs<? extends AST> trees, Object arg) {
         if (isRoot) {
             isRoot = false;
-            visitDeclarations(trees, arg);
+            handleTypes(trees, arg);
             SemType res = visitASTs(trees, arg);
             return res;
         }
@@ -70,7 +144,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
     // done
     @Override
 	public SemType visit(AstWhereExpr whereExpr, Object arg) {
-        visitDeclarations(whereExpr.decls, arg);
+        handleTypes(whereExpr.decls, arg);
         SemType type = null;
 
 		if (whereExpr.subExpr != null)
@@ -78,11 +152,11 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 		if (whereExpr.decls != null)
 			whereExpr.decls.accept(this, arg);
 
+        SemAn.exprOfType.put(whereExpr, type);
 		return type;
 	}
 
-
-    // mostly (nvm nek piše da bi funkcija lahka vračala sam [char, int, void, ptr] tk da morm še checkat)
+    // done
     @Override
 	public SemType visit(AstFunDecl funDecl, Object arg) {
         SemType exprType = null, definedType = null;
@@ -94,20 +168,28 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 		if (funDecl.expr != null)
             exprType = funDecl.expr.accept(this, arg);
 
-        if (!validateTwoTypes(definedType, exprType)) {
-            throw new Report.Error(funDecl.location, String.format("Function return type (%s) does not match the return type of expression (%s)", definedType.getClass(), exprType.getClass()));
+        if (definedType instanceof SemArr) {
+            throw new Report.Error("Function can not return type Array");
         }
 
+        if (!validateTwoTypes(definedType, exprType)) {
+            throw new Report.Error(funDecl.location, String.format("Function return missmatch expected %s got %s", stype(definedType), stype(exprType)));
+        }
+        
 		return definedType;
 	}
 
-    // mostly (sicer nvm a bi mogu to kam insertat)
+    // done
 	@Override
 	public SemType visit(AstParDecl parDecl, Object arg) {
         SemType type = null;
 
 		if (parDecl.type != null)
 			type = parDecl.type.accept(this, arg);
+
+        if (type.actualType() instanceof SemArr) {
+            throw new Report.Error(parDecl.location, "Function params can't be of type ARR");
+        }
 
 		return type;
 	}
@@ -116,14 +198,12 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 	@Override
 	public SemType visit(AstTypDecl typDecl, Object arg) {
 		if (typDecl.type != null)
-			typDecl.type.accept(this, arg);
+			return typDecl.type.accept(this, arg);
 
-        SemType type = typDecl.type.accept(this, arg);
-        SemAn.declaresType.get(typDecl).define(type);
-		return type;
+        return null;
 	}
 
-    // mostly (sicer nvm a bi mogu to kam insertat)
+    // done
 	@Override
 	public SemType visit(AstVarDecl varDecl, Object arg) {
 		if (varDecl.type != null)
@@ -144,28 +224,79 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 		if (binExpr.sndSubExpr != null)
 			t2 = binExpr.sndSubExpr.accept(this, arg);
 
-        if (!validateTwoTypes(t1, t2)) {
-            throw new Report.Error(binExpr.location, String.format("Cannot use %s operator %s on type %s and %s", binExpr.oper, t1.getClass(), t2.getClass()));
+        switch (binExpr.oper) {
+            case EQU:
+            case NEQ:
+            case LTH:
+            case GTH:
+            case LEQ:
+            case GEQ:
+                if (t1.actualType() instanceof SemArr || t2.actualType() instanceof SemArr) {
+                    throw new Report.Error(binExpr.location, String.format("Operation %s in not supported for Arrays (got %s and %s)", binExpr.oper.name(), stype(t1), stype(t2)));
+                }
+                break;
+            case AND:
+            case OR:
+            case MUL:
+            case DIV:
+            case MOD:
+            case ADD:
+            case SUB:
+                if (!(t1.actualType() instanceof SemInt && t2.actualType() instanceof SemInt)) {
+                    throw new Report.Error(binExpr.location, String.format("Operation %s in not defined on types %s and %s", binExpr.oper.name(), stype(t1), stype(t2)));
+                }
+                break;
+            case ARR:
+                if (!(t1.actualType() instanceof SemArr) || !(t2.actualType() instanceof SemInt)) {
+                    throw new Report.Error(binExpr.location, String.format("Expected INT[] got %s[%s]", stype(t1), stype(t2)));
+                }
+
+                SemArr array = (SemArr)t1.actualType();
+                SemAn.exprOfType.put(binExpr, array.elemType);
+                return array.elemType;
+        }
+
+        if (binExpr.oper != AstBinExpr.Oper.ARR && !validateTwoTypes(t1, t2)) {
+            throw new Report.Error(binExpr.location, String.format("Cannot join types %s and %s", stype(t1), stype(t2)));
         }
 
         SemAn.exprOfType.put(binExpr, t1);
 		return t1;
 	}
 
-    // mostly (preveri št. parametrov pa mogoč še kak type idk)
+    // todo (arg types check)
 	@Override
 	public SemType visit(AstCallExpr callExpr, Object arg) {
         AstFunDecl decl = (AstFunDecl) SemAn.declaredAt.get(callExpr);
         SemType type = decl.type.accept(this, arg).actualType();
+        if (type instanceof SemArr) {
+            throw new Report.Error("Function can not return type Array");
+        }
 
-		if (callExpr.args != null)
-			callExpr.args.accept(this, arg);
+		if (callExpr.args != null) {
+            callExpr.args.accept(this, arg);
+
+            Vector<AstExpr> sentParams = callExpr.args.asts();
+            Vector<AstParDecl> declaredParams = decl.pars.asts();
+            if (sentParams.size() != declaredParams.size()) {
+                throw new Report.Error(callExpr.location, String.format("Passed arguments missmatch (expected %d, got %d)", declaredParams.size(), sentParams.size()));
+            }
+
+            for (int i = 0; i < sentParams.size(); i++) {
+                SemType sentType = SemAn.exprOfType.get(sentParams.get(i));
+                SemType requiredParamType =  declaredParams.get(i).accept(this, arg);
+                if (!validateTwoTypes(requiredParamType, sentType)) {
+                    throw new Report.Error(callExpr.location, String.format("[%d-th] params should be of type %s got %s!", i, stype(requiredParamType), stype(sentType)));
+                }
+            }
+        }
+			
 
         SemAn.exprOfType.put(callExpr, type);
 		return type;
 	}
 
-    // todo (tt cast je men tk čudn pač wtf so casts pr nas, če itak napou ni pointa da so tam - strukturna enakost)
+    // done
 	@Override
 	public SemType visit(AstCastExpr castExpr, Object arg) {
         SemType t1 = null, t2 = null;
@@ -175,12 +306,19 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 		if (castExpr.type != null)
 			t2 = castExpr.type.accept(this, arg);
 
-        if (!validateTwoTypes(t1, t2)) {
-            throw new Report.Error(castExpr.location, String.format("Cannot cast variable of (type) %s to type (%s)", t1.getClass(), t2.getClass()));
+        SemType t1Actual = t1.actualType();
+        SemType t2Actual = t2.actualType();
+
+        if (!(t1Actual instanceof SemInt || t1Actual instanceof SemChar || t1Actual instanceof SemPtr)) {
+            throw new Report.Error(castExpr.location, String.format("Expression of type cannot be cast %s!", stype(t1)));
+        }
+
+        if (!(t2Actual instanceof SemInt || t2Actual instanceof SemChar || t2Actual instanceof SemPtr)) {
+            throw new Report.Error(castExpr.location, String.format("Cast result of type %s is not allowed!", stype(t2)));
         }
 
         SemAn.exprOfType.put(castExpr, t2);
-		return null;
+		return t2;
 	}
 
     // done
@@ -220,7 +358,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 		return type;
 	}
 
-    // todo [TOLE JE TOTALNO NE OKEJ] sam neki sm napisu ker se mi ni dalo do konca
+    // done
 	@Override
 	public SemType visit(AstPreExpr preExpr, Object arg) {
         SemType type = null, resultType = null;
@@ -233,19 +371,21 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
                 resultType = new SemPtr(new SemVoid());
                 break;
             case DEL:
+                if (!(type.actualType() instanceof SemPtr)) {
+                    throw new Report.Error(preExpr.location, String.format("DEL is only allowed on pointers got (%s)", stype(type)));
+                }
                 resultType = new SemVoid();
                 break;
             case NOT:
-                resultType = type;
-                break;    
             case ADD:
-                resultType = type;
-                break;
             case SUB:
+                if (!(type.actualType() instanceof SemInt)) {
+                    throw new Report.Error(preExpr.location, String.format("Operation %s is only allowed on INTs", preExpr.oper.name()));
+                }
                 resultType = type;
                 break;
-            case PTR:   
-                resultType = new SemPtr(new SemVoid());
+            case PTR:
+                resultType = new SemPtr(type);
                 break;
         }
 
@@ -253,7 +393,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 		return resultType;
 	}
 
-    // mostly (lahka bi blo če mamo nek expression ko je actualtype pointer pol se mamo fajn)
+    // done
 	@Override
 	public SemType visit(AstPstExpr pstExpr, Object arg) {
         SemType type = null;
@@ -263,7 +403,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 
         SemType actualType = type.actualType();
         if (!(actualType instanceof SemPtr)) {
-            throw new Report.Error(pstExpr.location, String.format("Cannot get value at address because type is %s", actualType.getClass()));
+            throw new Report.Error(pstExpr.location, String.format("Cannot get value at address because type is %s (expected PTR)", stype(actualType)));
         }
 
         SemType pointerOfType = ((SemPtr)actualType).baseType;
@@ -285,7 +425,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 
 	// STATEMENTS
 
-    // mostly (nvm če je čist okej assign ker pač deluje prek actualtype)
+    // done
 	@Override
 	public SemType visit(AstAssignStmt assignStmt, Object arg) {
         SemType t1 = null, t2 = null;
@@ -296,7 +436,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 			t2 = assignStmt.sndSubExpr.accept(this, arg);
 
         if (!validateTwoTypes(t1, t2)) {
-            throw new Report.Error(assignStmt.location, String.format("Cannot assign type %s to variable of type %s", t2.getClass(), t1.getClass()));
+            throw new Report.Error(assignStmt.location, String.format("Cannot assign type %s to variable of type %s", stype(t2), stype(t1)));
         }
 
         SemAn.stmtOfType.put(assignStmt, new SemVoid());
@@ -355,7 +495,7 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 
 	// TYPES
 
-    // mostly (na tto funckijo sm kr proud ker pomoje fajn checkat stvar)
+    // done
 	@Override
 	public SemType visit(AstArrType arrType, Object arg) {
         SemType elemType = null;
