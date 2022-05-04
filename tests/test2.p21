@@ -1,0 +1,2 @@
+fun main(i:int):int = 1*i+j;
+var j:int;

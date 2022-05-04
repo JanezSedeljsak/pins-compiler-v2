@@ -1,0 +1,5 @@
+typ number=int;
+var a:number;
+var pa:^int;
+var pb:^number;
+fun main(i:int):int=(pa^==pb^);

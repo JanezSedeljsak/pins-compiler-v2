@@ -1,10 +1,11 @@
-var i: t1;
+typ t1 = [5]int;
+typ t2 = ^t1;
+typ ptr = ^int;
 
-fun t(j: int): void = ({
-  i + j * k;
-} where var i: t1; var k: t2; typ _int = int;);
+fun main(x: int): int = {
+  num^ = -543 + 40;
+  40 != num^;
+};
 
-typ t1 = t2;
-typ t2 = int;
-
+var num: ptr;
 

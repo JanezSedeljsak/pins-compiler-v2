@@ -1,0 +1,10 @@
+typ number=int;
+fun main(i:int):void = { 
+	if i>0 then 
+		while i>0 do 
+			i = i-1; 
+			main(i); 
+		end; 
+	end; 
+	none;
+};
