@@ -15,6 +15,7 @@ public class AstVarDecl extends AstDecl {
 	@Override
 	public void log(String pfx) {
 		System.out.println(pfx + "\033[1mAstVarDecl(" + name + ")\033[0m @(" + location + ")");
+		logAttributes(pfx);
 		type.log(pfx + "  ");
 	}
 

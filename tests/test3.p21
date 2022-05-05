@@ -1,10 +1,8 @@
-typ number=int;
-fun main(i:int):void = { 
-	if i>0 then 
-		while i>0 do 
-			i = i-1; 
-			main(i); 
-		end; 
-	end;
-	none;
+var x: int;
+var y: ^char;
+
+fun main(i: int, j: char): void = {
+	({
+		inner = 5;
+	} where var inner: int; fun add(a: int, b: int): int = a + b;);
 };
