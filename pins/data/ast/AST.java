@@ -5,6 +5,8 @@ import pins.common.report.*;
 import pins.data.ast.visitor.*;
 import pins.data.typ.*;
 import pins.phase.seman.*;
+import pins.data.mem.*;
+import pins.phase.memory.*;
 
 /**
  * An abstract syntax tree.
@@ -57,6 +59,22 @@ public abstract class AST implements Loggable {
 				type.log(pfx + "    ");
 			}
 		}
+		if (this instanceof AstFunDecl) {
+			MemFrame frame = Memory.frames.get((AstFunDecl) this);
+			if (frame != null)
+				frame.log(pfx + "    ");
+		}
+		if (this instanceof AstVarDecl) {
+			MemAccess access = Memory.varAccesses.get((AstVarDecl) this);
+			if (access != null)
+				access.log(pfx + "    ");
+		}
+		if (this instanceof AstParDecl) {
+			MemRelAccess access = Memory.parAccesses.get((AstParDecl) this);
+			if (access != null)
+				access.log(pfx + "    ");
+		}
+
 	}
 
 	public abstract <Result, Arg> Result accept(AstVisitor<Result, Arg> visitor, Arg arg);

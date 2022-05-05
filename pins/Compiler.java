@@ -6,20 +6,21 @@ import pins.data.ast.*;
 import pins.phase.lexan.*;
 import pins.phase.synan.*;
 import pins.phase.seman.*;
+import pins.phase.memory.*;
 
 /**
  * The PINS'22 compiler.
  */
 public class Compiler {
-		
+
 	/** All phases of the compiler. */
-	private static final String phases = "none|lexan|synan|abstr|seman";
+	private static final String phases = "none|lexan|synan|abstr|seman|memory";
 
 	/** Values of command line arguments. */
 	private static HashMap<String, String> cmdLine = new HashMap<String, String>();
 
 	public static void main(String[] args) {
-		
+
 		try {
 			Report.info("This is the PINS'22 compiler:");
 
@@ -85,7 +86,7 @@ public class Compiler {
 					}
 					break;
 				}
-				
+
 				// Syntax analysis.
 				AST ast = null;
 				try (LexAn lexan = new LexAn(cmdLine.get("--src-file-name")); SynAn synan = new SynAn(lexan)) {
@@ -93,19 +94,27 @@ public class Compiler {
 				}
 				if (cmdLine.get("--target-phase").equals("synan"))
 					break;
-				
+
 				// Abstract syntax.
 				if (cmdLine.get("--target-phase").equals("abstr")) {
 					ast.log("");
 					break;
 				}
-				
+
 				// Semantic analysis.
 				try (SemAn seman = new SemAn()) {
 					ast.accept(new NameResolver<>(), null);
 					ast.accept(new TypeChecker(), null);
 				}
 				if (cmdLine.get("--target-phase").equals("seman")) {
+					ast.log("");
+					break;
+				}
+
+				try (Memory memory = new Memory()) {
+					ast.accept(new MemEvaluator(), null);
+				}
+				if (cmdLine.get("--target-phase").equals("memory")) {
 					ast.log("");
 					break;
 				}
