@@ -39,7 +39,7 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.FunContext
 		if (funDecl.pars != null) {
 			for (AstParDecl parDecl : funDecl.pars.asts()) {
 				long parSize = SemAn.describesType.get(parDecl.type).size();
-				Memory.parAccesses.put(parDecl, new MemRelAccess(parSize, -ctx.parsSize, ctx.depth));
+				Memory.parAccesses.put(parDecl, new MemRelAccess(parSize, +ctx.parsSize, ctx.depth));
 				ctx.parsSize += parSize;
 			}
 		}
@@ -62,10 +62,12 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.FunContext
 			Memory.varAccesses.put(varDecl, new MemAbsAccess(varSize, new MemLabel(varDecl.name)));
 		} else {
 			if (varType instanceof SemArr) {
+				SemArr arrayDecl = (SemArr)varType;
+
 				Memory.varAccesses.put(varDecl, new MemAbsAccess(varSize, new MemLabel(varDecl.name)));
-				ctx.locsSize += new SemPtr(varType).size();
+				ctx.locsSize += new SemPtr(varType).size() * arrayDecl.numElems;
 			} else {
-				Memory.varAccesses.put(varDecl, new MemRelAccess(varSize, ctx.locsSize, ctx.depth));
+				Memory.varAccesses.put(varDecl, new MemRelAccess(varSize, -ctx.locsSize, ctx.depth));
 				ctx.locsSize += varSize;
 			}
 		}
