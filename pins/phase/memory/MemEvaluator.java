@@ -1,7 +1,5 @@
 package pins.phase.memory;
 
-import java.util.Collection;
-
 import pins.data.ast.*;
 import pins.data.ast.visitor.*;
 import pins.data.mem.*;
@@ -20,10 +18,10 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.FunContext
 	protected class FunContext {
 		public int depth = 0;
 		public long locsSize = 0;
-		public long ctxsSize = 0;
+		public long argsSize = 0;
 		public long parsSize = new SemPtr(new SemVoid()).size();
 	}
-
+	
 	@Override
 	public Object visit(AstFunDecl funDecl, FunContext ctx) {
 		boolean isGlobalFunction = ctx == null;
@@ -39,7 +37,7 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.FunContext
 		if (funDecl.pars != null) {
 			for (AstParDecl parDecl : funDecl.pars.asts()) {
 				long parSize = SemAn.describesType.get(parDecl.type).size();
-				Memory.parAccesses.put(parDecl, new MemRelAccess(parSize, +ctx.parsSize, ctx.depth));
+				Memory.parAccesses.put(parDecl, new MemRelAccess(parSize, ctx.parsSize, ctx.depth));
 				ctx.parsSize += parSize;
 			}
 		}
@@ -61,11 +59,11 @@ public class MemEvaluator extends AstFullVisitor<Object, MemEvaluator.FunContext
 		if (isGlobalVar) {
 			Memory.varAccesses.put(varDecl, new MemAbsAccess(varSize, new MemLabel(varDecl.name)));
 		} else {
-			if (varType instanceof SemArr) {
-				SemArr arrayDecl = (SemArr)varType;
+			if (varType.actualType() instanceof SemArr) {
+				SemArr arrayDecl = (SemArr)(varType.actualType());
 
 				Memory.varAccesses.put(varDecl, new MemAbsAccess(varSize, new MemLabel(varDecl.name)));
-				ctx.locsSize += new SemPtr(varType).size() * arrayDecl.numElems;
+				ctx.locsSize += new SemPtr(arrayDecl).size();
 			} else {
 				Memory.varAccesses.put(varDecl, new MemRelAccess(varSize, -ctx.locsSize, ctx.depth));
 				ctx.locsSize += varSize;

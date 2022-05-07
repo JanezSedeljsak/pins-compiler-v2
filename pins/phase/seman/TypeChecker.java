@@ -254,7 +254,12 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 
 	@Override
 	public SemType visit(AstCallExpr callExpr, Object arg) {
-        AstFunDecl decl = (AstFunDecl) SemAn.declaredAt.get(callExpr);
+        AstDecl baseDecl = SemAn.declaredAt.get(callExpr);
+        if (!(baseDecl instanceof AstFunDecl)) {
+            throw new Report.Error(callExpr.location, String.format("%s is not a function", baseDecl.name));
+        }
+
+        AstFunDecl decl = (AstFunDecl) baseDecl;
         SemType type = decl.type.accept(this, arg);
         if (type.actualType() instanceof SemArr) {
             throw new Report.Error("Function can not return type Array");
