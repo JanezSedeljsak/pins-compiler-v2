@@ -3,7 +3,7 @@ typ char_ptr = ^char;
 typ char_ptr2 = char_ptr;
 
 fun main(): int = {
-  chr = ^get_char('b');
+  chr = get_char('b');
   num^ = nums[2] - 4;
   add(num^, 3);
 };

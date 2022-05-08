@@ -48,6 +48,10 @@ public enum Token {
 	}
 
 	public String str() {
+		if (this == EOF) {
+			return "EOF";
+		}
+
 		if (!isRegex) {
 			return match;
 		}

@@ -20,6 +20,13 @@ public class Symbol implements Locatable, Loggable {
 		this.location = location;
 	}
 
+	public String lexeme() {
+		if (this.token == Token.EOF) {
+			return "EOF";
+		}
+		return lexeme;
+	}
+
 	@Override
 	public String toString() {
 		return "(" + token.toString() + "," + lexeme + "," + (location == null ? "" : location.toString()) + ")";

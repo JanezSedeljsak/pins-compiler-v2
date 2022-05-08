@@ -1,9 +1,4 @@
-fun Metoda (a: int, b: char, c: arr) : void = {
-    if a <= 6 then
-        g();
-    else
-        if y < 4 then
-          s = (5 + 8) * 8;
-        end;
-    end;
-};
+fun Metoda () : void = ptr = (new 5 : ^int);
+
+
+var ptr: ^int;

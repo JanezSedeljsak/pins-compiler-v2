@@ -26,33 +26,37 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
             t2 = t2.actualType();
         }
 
-        return t1.getClass().equals(t2.getClass());
+        boolean isBaseEqual = t1.getClass().equals(t2.getClass());
+        if (isBaseEqual && t1 instanceof SemArr) {
+            SemArr arr1 = (SemArr)t1, arr2 = (SemArr)t2;
+            boolean arrElemTypeEqual = validateTwoTypes(arr1.elemType, arr2.elemType);
+            return arrElemTypeEqual && arr1.numElems == arr2.numElems;
+        }
+
+        if (isBaseEqual && t1 instanceof SemPtr) {
+            SemPtr ptr1 = (SemPtr)t1, ptr2 = (SemPtr)t2;
+            return validateTwoTypes(ptr1.baseType, ptr2.baseType);
+        }
+
+        return isBaseEqual;
     }
    
-    private static String stype(SemType type, boolean topLevel) {
+    private static String stype(SemType type) {
         type = type.actualType();
         if (type instanceof SemArr) {
             SemArr arrType = (SemArr)type;
-            return String.format("%s[%d]", stype(arrType.elemType, false), arrType.numElems);
+            return String.format("[%d]%s", arrType.numElems, stype(arrType.elemType));
         }
 
         if (type instanceof SemChar) return String.format("CHAR");
         if (type instanceof SemInt) return String.format("INT");
         if (type instanceof SemPtr) {
             SemPtr ptrType = (SemPtr)type;
-            if (topLevel) {
-                return String.format("PTR(%s)", stype(ptrType.baseType, false));
-            } else {
-                return String.format("PTR");
-            }
+            return String.format("^%s", stype(ptrType.baseType));
         }
 
         if (type instanceof SemVoid) return String.format("VOID");
         return "/";
-    }
-
-    private static String stype(SemType type) {
-        return stype(type, true);
     }
 
     

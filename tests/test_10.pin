@@ -1,4 +1,4 @@
-static fun Metoda()
+fun Metoda()
 {
 	int a = -44444;
 	int b=33;

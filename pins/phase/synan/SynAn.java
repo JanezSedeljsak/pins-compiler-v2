@@ -27,10 +27,13 @@ public class SynAn implements AutoCloseable {
 			return ast;
 		}
 
-		throw new Report.Error(peek().location, String.format("Unexpected token at end of program: %s, expected: EOF", peek().lexeme));
+		throw new Report.Error(peek().location, String.format("Unexpected token at end of program: %s, expected: EOF", peek().lexeme()));
 	}
 
 	public Symbol peek() {
+		if (current == null) {
+			throw new Report.Error("Unexpected EOF (code not finished properly)");
+		}
 		return current;
 	}
 
@@ -38,7 +41,7 @@ public class SynAn implements AutoCloseable {
 		if (dontMove) {
 			dontMove = false;
 		} else {
-			prevSymb = peek();
+			prevSymb = current;
 			current = lexan.lexer();
 		}
 	}
@@ -48,7 +51,7 @@ public class SynAn implements AutoCloseable {
 		if (peek().token.equals(token)) {
 			return peek();
 		} else {
-			String err = String.format("Unexpected token: \"%s\" after: \"%s\" - expected \"%s\"", peek().lexeme, prevSymb.lexeme, token.str());
+			String err = String.format("Unexpected token: \"%s\" after: \"%s\" - expected \"%s\"", peek().lexeme(), prevSymb.lexeme(), token.str());
 			if (peek().token.equals(Token.EOF)) {
 				throw new Report.Error(String.format("Unexpected EOF, expected: \"%s\"", token.str()));
 			}
@@ -86,21 +89,21 @@ public class SynAn implements AutoCloseable {
 				dontMove = true;
 				return;
 			case TYP:
-				String name = checkExpected(Token.IDENTIFIER).lexeme;
+				String name = checkExpected(Token.IDENTIFIER).lexeme();
 				checkExpected(Token.ASSIGN);
 				AstType type = parseType();
 				checkExpected(Token.SEMICOLON);
 				declNode = new AstTypDecl(fromTo(loc), name, type);
 				break;
 			case VAR:
-				name = checkExpected(Token.IDENTIFIER).lexeme;
+				name = checkExpected(Token.IDENTIFIER).lexeme();
 				checkExpected(Token.COLON);
 				type =  parseType();
 				checkExpected(Token.SEMICOLON);
 				declNode = new AstVarDecl(fromTo(loc), name, type);
 				break;
 			case FUN:
-				name = checkExpected(Token.IDENTIFIER).lexeme;
+				name = checkExpected(Token.IDENTIFIER).lexeme();
 				checkExpected(Token.LEFT_PARENTHESIS);
 				Vector<AstParDecl> paramsVector = new Vector<>();
 				parseParams(paramsVector);
@@ -114,7 +117,7 @@ public class SynAn implements AutoCloseable {
 				declNode = new AstFunDecl(fromTo(loc), name, pars, type, expr);
 				break;
 			default:
-				throw new Report.Error(peek().location, String.format("Unexpected token at start of decleration \"%s\", allowed [typ, var, fun]", peek().lexeme));
+				throw new Report.Error(peek().location, String.format("Unexpected token at start of decleration \"%s\", allowed [typ, var, fun]", peek().lexeme()));
 		}
 
 		parentNode.add(declNode);
@@ -133,7 +136,7 @@ public class SynAn implements AutoCloseable {
 			case INT:
 				return new AstAtomType(loc, AstAtomType.Kind.INT);
 			case IDENTIFIER:
-				return new AstTypeName(loc, peek().lexeme);
+				return new AstTypeName(loc, peek().lexeme());
 			case LEFT_BRACKET:
 				AstExpr expr = parseExpr();
 				checkExpected(Token.RIGHT_BRACKET);
@@ -147,7 +150,7 @@ public class SynAn implements AutoCloseable {
 				checkExpected(Token.RIGHT_PARENTHESIS);
 				return type;
 			default:
-				throw new Report.Error(peek().location, String.format("Unexpected token at start of TYPE decleration: \"%s\"", peek().lexeme));
+				throw new Report.Error(peek().location, String.format("Unexpected token at start of TYPE decleration: \"%s\"", peek().lexeme()));
 		}
 	}
 
@@ -157,7 +160,7 @@ public class SynAn implements AutoCloseable {
 
 		switch (peek().token) {
 			case IDENTIFIER:
-				String name = peek().lexeme;
+				String name = peek().lexeme();
 				checkExpected(Token.COLON);
 				AstType type = parseType();
 				parentNode.add(new AstParDecl(fromTo(loc), name, type));
@@ -174,7 +177,7 @@ public class SynAn implements AutoCloseable {
 
 		switch (peek().token) {
 			case COMMA:
-				String name = checkExpected(Token.IDENTIFIER).lexeme;
+				String name = checkExpected(Token.IDENTIFIER).lexeme();
 				checkExpected(Token.COLON);
 				AstType type = parseType();
 				parentNode.add(new AstParDecl(fromTo(loc), name, type));
@@ -398,21 +401,15 @@ public class SynAn implements AutoCloseable {
 
 		switch (peek().token) {
 			case INT_CONST:
-				return new AstConstExpr(loc, AstConstExpr.Kind.INT, peek().lexeme);
+				return new AstConstExpr(loc, AstConstExpr.Kind.INT, peek().lexeme());
 			case CHAR_CONST:
-				return new AstConstExpr(loc, AstConstExpr.Kind.CHAR, peek().lexeme);
+				return new AstConstExpr(loc, AstConstExpr.Kind.CHAR, peek().lexeme());
 			case POINTER_CONST:
-				return new AstConstExpr(loc, AstConstExpr.Kind.PTR, peek().lexeme);
+				return new AstConstExpr(loc, AstConstExpr.Kind.PTR, peek().lexeme());
 			case VOID_CONST:
-				return new AstConstExpr(loc, AstConstExpr.Kind.VOID, peek().lexeme);
+				return new AstConstExpr(loc, AstConstExpr.Kind.VOID, peek().lexeme());
 			case IDENTIFIER:
-				return parseFuncCall(peek().lexeme, loc);
-			/*case NEW:
-				AstExpr expr = parseExprWrapper();
-				return new AstPreExpr(fromTo(loc), AstPreExpr.Oper.NEW, expr);
-			case DEL:
-				expr = parseExprWrapper();
-				return new AstPreExpr(fromTo(loc), AstPreExpr.Oper.DEL, expr);*/
+				return parseFuncCall(peek().lexeme(), loc);
 			case LEFT_BRACE:
 				AstStmtExpr stmtExpr = parseListOfStmts();
 				checkExpected(Token.RIGHT_BRACE);
@@ -423,7 +420,7 @@ public class SynAn implements AutoCloseable {
 				checkExpected(Token.RIGHT_PARENTHESIS);
 				return right;
 			default:
-				throw new Report.Error(peek().location, String.format("Unexpected token at start of expression: \"%s\"", peek().lexeme));
+				throw new Report.Error(peek().location, String.format("Unexpected token at start of expression: \"%s\"", peek().lexeme()));
 		}
 	}
 
@@ -571,7 +568,7 @@ public class SynAn implements AutoCloseable {
 				checkExpected(Token.SEMICOLON);
 				return new AstAssignStmt(fromTo(expr.location), expr, expr2);
 			default:
-				throw new Report.Error(peek().location, String.format("Expected assignment or semicolon after expression, got: \"%s\"", peek().lexeme));
+				throw new Report.Error(peek().location, String.format("Expected assignment or semicolon after expression, got: \"%s\"", peek().lexeme()));
 		}
 	}
 
@@ -588,7 +585,7 @@ public class SynAn implements AutoCloseable {
 				checkExpected(Token.SEMICOLON);
 				return elseExpression;
 			default:
-				throw new Report.Error(peek().location, String.format("Unexpected token got: \"%s\" \"%s\"", "else|end", peek().lexeme));
+				throw new Report.Error(peek().location, String.format("Unexpected token got: \"%s\" \"%s\"", "else|end", peek().lexeme()));
 		}
 	}
 }

@@ -97,7 +97,7 @@ public class LexAn implements AutoCloseable {
 
 		if (currChar == (char)-1) {
 			if (commentDepth != 0) Report.warning("Comment not closed at end of file!");
-			return new Symbol(Token.EOF, "", null);
+			return new Symbol(Token.EOF, "", new Location(row, col));
 		}
 
 		return null;
@@ -171,7 +171,7 @@ public class LexAn implements AutoCloseable {
 			// handle EOF
 			len = builder.length();
 			if (len == 0 || (len == 1 && eofFlag)) {
-				if (eofFlag) return new Symbol(Token.EOF, "", null);
+				if (eofFlag) return new Symbol(Token.EOF, "", new Location(row, col));
 				continue;
 			}
 
