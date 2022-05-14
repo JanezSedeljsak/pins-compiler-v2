@@ -7,6 +7,7 @@ import pins.phase.lexan.*;
 import pins.phase.synan.*;
 import pins.phase.seman.*;
 import pins.phase.memory.*;
+import pins.phase.imcgen.*;
 
 /**
  * The PINS'22 compiler.
@@ -14,7 +15,7 @@ import pins.phase.memory.*;
 public class Compiler {
 
 	/** All phases of the compiler. */
-	private static final String phases = "none|lexan|synan|abstr|seman|memory";
+	private static final String phases = "none|lexan|synan|abstr|seman|memory|imcgen";
 
 	/** Values of command line arguments. */
 	private static HashMap<String, String> cmdLine = new HashMap<String, String>();
@@ -111,10 +112,20 @@ public class Compiler {
 					break;
 				}
 
+				// Memory: accesses and stack frames.
 				try (Memory memory = new Memory()) {
 					ast.accept(new MemEvaluator(), null);
 				}
 				if (cmdLine.get("--target-phase").equals("memory")) {
+					ast.log("");
+					break;
+				}
+				
+				// Intermediate code generation.
+				try (ImcGen imcgen = new ImcGen()) {
+					ast.accept(new CodeGenerator(), null);
+				}
+				if (cmdLine.get("--target-phase").equals("imcgen")) {
 					ast.log("");
 					break;
 				}
