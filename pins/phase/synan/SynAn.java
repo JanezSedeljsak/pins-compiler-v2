@@ -303,7 +303,7 @@ public class SynAn implements AutoCloseable {
 	}
 
 	private AstExpr parseOtherMath() {
-		AstExpr left =  parsePrefix(null);
+		AstExpr left = parsePrefix();
 		return parseInnerOtherMath(left);
 	}
 
@@ -326,7 +326,7 @@ public class SynAn implements AutoCloseable {
 		}
 
 		if (operator != null) {
-			AstExpr temp = parsePrefix(null);
+			AstExpr temp = parsePrefix();
 			AstExpr expr = new AstBinExpr(fromTo(left.location), operator, left, temp);
 			return parseInnerOtherMath(expr);
 		}
@@ -334,7 +334,7 @@ public class SynAn implements AutoCloseable {
 		return left;
 	}
 
-	private AstExpr parsePrefix(AstExpr left) {
+	private AstExpr parsePrefix() {
 		move();
 		Location loc = peek().location;
 		AstPreExpr.Oper operator = null;
@@ -363,12 +363,12 @@ public class SynAn implements AutoCloseable {
 		}
 
 		if (operator != null) {
-			AstExpr temp = parsePrefix(null);
+			AstExpr temp = parsePrefix();
 			AstExpr expr = new AstPreExpr(fromTo(loc), operator, temp);
-			return parsePrefix(expr);
+			return expr;
 		}
 
-		return left == null ? parsePostfix() : left;
+		return parsePostfix();
 	}
 
 	private AstExpr parsePostfix() {
