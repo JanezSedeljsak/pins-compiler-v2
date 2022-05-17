@@ -35,6 +35,10 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
 
         if (isBaseEqual && t1 instanceof SemPtr) {
             SemPtr ptr1 = (SemPtr)t1, ptr2 = (SemPtr)t2;
+            if (ptr1.baseType instanceof SemVoid || ptr2.baseType instanceof SemVoid) {
+                return true;
+            }
+            
             return validateTwoTypes(ptr1.baseType, ptr2.baseType);
         }
 
