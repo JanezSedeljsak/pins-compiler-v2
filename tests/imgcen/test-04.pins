@@ -1,7 +1,7 @@
 var a : int;
 fun x(b : int) : int =
 (
-    a + b + c
+    a + (b + c)
     where
     var c : int;
 );

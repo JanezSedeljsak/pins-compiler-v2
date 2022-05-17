@@ -32,17 +32,21 @@ public class ExprGenerator implements AstVisitor<ImcExpr, Stack<MemFrame>> {
 	@Override
 	public ImcExpr visit(AstBinExpr binExpr, Stack<MemFrame> frames) {
 		ImcExpr left = binExpr.fstSubExpr.accept(this, frames);
-		ImcExpr right = binExpr.sndSubExpr.accept(this, frames);
+        ImcExpr right = binExpr.sndSubExpr.accept(this, frames);
+
 		if (binExpr.oper == AstBinExpr.Oper.ARR) {
-			ImcExpr expr = new ImcBINOP(ImcBINOP.Oper.ADD, left,
-					new ImcBINOP(ImcBINOP.Oper.MUL, new ImcCONST(8), right));
+			ImcMEM mem = new ImcMEM(left);
+			ImcCONST itemSize = new ImcCONST(SemAn.exprOfType.get(binExpr).size());
+
+			ImcBINOP add = new ImcBINOP(ImcBINOP.Oper.ADD, mem.addr, new ImcBINOP(ImcBINOP.Oper.MUL, right, itemSize));
+			ImcMEM expr = new ImcMEM(add);
 			ImcGen.exprImc.put(binExpr, expr);
 			return expr;
 		}
-
+		
 		ImcExpr expr = new ImcBINOP(ImcBINOP.Oper.valueOf(binExpr.oper.toString()), left, right);
-		ImcGen.exprImc.put(binExpr, expr);
-		return expr;
+        ImcGen.exprImc.put(binExpr, expr);
+        return expr;
 	}
 
 	@Override
@@ -91,7 +95,7 @@ public class ExprGenerator implements AstVisitor<ImcExpr, Stack<MemFrame>> {
 		ImcExpr expr;
 		switch (constExpr.kind) {
 			case CHAR:
-				expr = new ImcCONST((long) constExpr.name.charAt(0));
+				expr = new ImcCONST((long) constExpr.name.charAt(1));
 				break;
 			case INT:
 				expr = new ImcCONST(Long.parseLong(constExpr.name));
@@ -193,6 +197,7 @@ public class ExprGenerator implements AstVisitor<ImcExpr, Stack<MemFrame>> {
 	@Override
 	public ImcExpr visit(AstStmtExpr stmtExpr, Stack<MemFrame> frames) {
 		ImcStmt stmt = stmtExpr.stmts.accept(new StmtGenerator(), frames);
+
 		if (stmt instanceof ImcSTMTS) {
 			ImcSTMTS stmts = (ImcSTMTS) stmt;
 			ImcStmt lastStmt = stmts.stmts.get(stmts.stmts.size() - 1);
@@ -202,6 +207,7 @@ public class ExprGenerator implements AstVisitor<ImcExpr, Stack<MemFrame>> {
 				return res;
 			}
 		}
+
 		ImcExpr res = new ImcSEXPR(stmt, new ImcCONST(0));
 		ImcGen.exprImc.put(stmtExpr, res);
 		return res;

@@ -75,37 +75,37 @@ fun test(a : int) : int = {
               LABEL(L1)
             ESTMT
               BINOP
-                MEM
-                  BINOP
-                    TEMP(T0)
-                    CONST(8)
                 BINOP
+                  MEM
+                    BINOP
+                      TEMP(T0)
+                      CONST(8)
                   BINOP
                     MEM
                       BINOP
                         TEMP(T0)
                         CONST(8)
                     CONST(2)
-                  MEM
-                    BINOP
-                      TEMP(T0)
-                      CONST(8)
+                MEM
+                  BINOP
+                    TEMP(T0)
+                    CONST(8)
           BINOP
-            MEM
-              BINOP
-                TEMP(T0)
-                CONST(8)
             BINOP
+              MEM
+                BINOP
+                  TEMP(T0)
+                  CONST(8)
               BINOP
                 MEM
                   BINOP
                     TEMP(T0)
                     CONST(8)
                 CONST(2)
-              MEM
-                BINOP
-                  TEMP(T0)
-                  CONST(8)
+            MEM
+              BINOP
+                TEMP(T0)
+                CONST(8)
       {Stmts}
           AstIfStmt @(4.5-4.6)
             stmtOfType:
@@ -387,67 +387,67 @@ fun test(a : int) : int = {
                                       Int
                                     exprImc:
                                       CONST(1)
-          AstExprStmt @(9.7-9.7)
+          AstExprStmt @(9.17-9.17)
             stmtOfType:
               Int
             stmtImc:
               ESTMT
                 BINOP
-                  MEM
-                    BINOP
-                      TEMP(T0)
-                      CONST(8)
                   BINOP
+                    MEM
+                      BINOP
+                        TEMP(T0)
+                        CONST(8)
                     BINOP
                       MEM
                         BINOP
                           TEMP(T0)
                           CONST(8)
                       CONST(2)
-                    MEM
-                      BINOP
-                        TEMP(T0)
-                        CONST(8)
-            AstBinExpr(MUL) @(9.7-9.7)
+                  MEM
+                    BINOP
+                      TEMP(T0)
+                      CONST(8)
+            AstBinExpr(MOD) @(9.17-9.17)
               exprOfType:
                 Int
               exprImc:
                 BINOP
-                  MEM
-                    BINOP
-                      TEMP(T0)
-                      CONST(8)
                   BINOP
-                    BINOP
-                      MEM
-                        BINOP
-                          TEMP(T0)
-                          CONST(8)
-                      CONST(2)
                     MEM
                       BINOP
                         TEMP(T0)
                         CONST(8)
-              AstNameExpr(a) @(9.5-9.5)
-                declaredAt: 3.10-3.10
-                exprOfType:
-                  Int
-                exprImc:
-                  MEM
-                    BINOP
-                      TEMP(T0)
-                      CONST(8)
-              AstBinExpr(MOD) @(9.17-9.17)
-                exprOfType:
-                  Int
-                exprImc:
-                  BINOP
                     BINOP
                       MEM
                         BINOP
                           TEMP(T0)
                           CONST(8)
                       CONST(2)
+                  MEM
+                    BINOP
+                      TEMP(T0)
+                      CONST(8)
+              AstBinExpr(MUL) @(9.7-9.7)
+                exprOfType:
+                  Int
+                exprImc:
+                  BINOP
+                    MEM
+                      BINOP
+                        TEMP(T0)
+                        CONST(8)
+                    BINOP
+                      MEM
+                        BINOP
+                          TEMP(T0)
+                          CONST(8)
+                      CONST(2)
+                AstNameExpr(a) @(9.5-9.5)
+                  declaredAt: 3.10-3.10
+                  exprOfType:
+                    Int
+                  exprImc:
                     MEM
                       BINOP
                         TEMP(T0)
@@ -476,13 +476,13 @@ fun test(a : int) : int = {
                       Int
                     exprImc:
                       CONST(2)
-                AstNameExpr(a) @(9.19-9.19)
-                  declaredAt: 3.10-3.10
-                  exprOfType:
-                    Int
-                  exprImc:
-                    MEM
-                      BINOP
-                        TEMP(T0)
-                        CONST(8)
+              AstNameExpr(a) @(9.19-9.19)
+                declaredAt: 3.10-3.10
+                exprOfType:
+                  Int
+                exprImc:
+                  MEM
+                    BINOP
+                      TEMP(T0)
+                      CONST(8)
 }#

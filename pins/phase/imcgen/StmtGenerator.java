@@ -35,26 +35,36 @@ public class StmtGenerator implements AstVisitor<ImcStmt, Stack<MemFrame>> {
 	}
 
 	@Override
-	public ImcStmt visit(AstIfStmt ifStmt, Stack<MemFrame> arg) {
-		// TODO Auto-generated method stub
+	public ImcStmt visit(AstIfStmt ifStmt, Stack<MemFrame> frames) {
 		Vector<ImcStmt> stmts = new Vector<ImcStmt>();
-		ImcExpr cond = ifStmt.condExpr.accept(new ExprGenerator(), arg);
-		MemLabel posLabel = new MemLabel();
-		ImcStmt thenBody = ifStmt.thenBodyStmt.accept(new StmtGenerator(), arg);
-		MemLabel negLabel = new MemLabel();
-		ImcStmt elseBody = null;
-		if (ifStmt.elseBodyStmt != null) {
-			elseBody = ifStmt.elseBodyStmt.accept(new StmtGenerator(), arg);
-		}
-		
-		MemLabel endLabel = new MemLabel();
+		ImcExpr cond = ifStmt.condExpr.accept(new ExprGenerator(), frames);
 
-		stmts.add(new ImcCJUMP(cond, posLabel, negLabel));
-		stmts.add(new ImcLABEL(posLabel));
-		stmts.add(thenBody);
-		stmts.add(new ImcLABEL(negLabel));
-		if (elseBody != null) stmts.add(elseBody);
-		stmts.add(new ImcLABEL(endLabel));
+		MemLabel posLbl = new MemLabel();
+		MemLabel negLbl = new MemLabel();
+
+		ImcCJUMP cjump = new ImcCJUMP(cond, posLbl, negLbl);
+		ImcStmt thenBody = ifStmt.thenBodyStmt.accept(new StmtGenerator(), frames);
+
+		// only IF -> CJUMP("POS", "NEG") - "POS" - BODY - "NEG"
+		if (ifStmt.elseBodyStmt == null) {
+			stmts.add(cjump);
+            stmts.add(new ImcLABEL(posLbl));
+            stmts.add(thenBody);
+            stmts.add(new ImcLABEL(negLbl));
+		} 
+		// IF - ELSE -> CJUMP("POS", "NEG") - "POS" - BODY - JUMP("END") - "NEG" - ELSE_BODY - "END"
+		else {
+			MemLabel endLbl = new MemLabel();
+			ImcStmt elseBody = ifStmt.elseBodyStmt.accept(new StmtGenerator(), frames);
+
+			stmts.add(cjump);
+            stmts.add(new ImcLABEL(posLbl));
+            stmts.add(thenBody);
+            stmts.add(new ImcJUMP(endLbl));
+            stmts.add(new ImcLABEL(negLbl));
+            stmts.add(elseBody);
+            stmts.add(new ImcLABEL(endLbl));
+		}
 
 		ImcSTMTS result = new ImcSTMTS(stmts);
 		ImcGen.stmtImc.put(ifStmt, result);
@@ -62,16 +72,15 @@ public class StmtGenerator implements AstVisitor<ImcStmt, Stack<MemFrame>> {
 	}
 
 	@Override
-	public ImcStmt visit(AstWhileStmt whileStmt, Stack<MemFrame> arg) {
+	public ImcStmt visit(AstWhileStmt whileStmt, Stack<MemFrame> frames) {
 		Vector<ImcStmt> stmts = new Vector<ImcStmt>();
-		ImcExpr cond = whileStmt.condExpr.accept(new ExprGenerator(), arg);
+		ImcExpr cond = whileStmt.condExpr.accept(new ExprGenerator(), frames);
 
 		MemLabel condLbl = new MemLabel();
 		MemLabel posLbl = new MemLabel();
 		MemLabel endLbl = new MemLabel();
 
-		ImcStmt body = whileStmt.bodyStmt.accept(new StmtGenerator(), arg);
-
+		ImcStmt body = whileStmt.bodyStmt.accept(new StmtGenerator(), frames);
 		ImcCJUMP cjump = new ImcCJUMP(cond, posLbl, endLbl);
         ImcJUMP jump = new ImcJUMP(condLbl);
 
