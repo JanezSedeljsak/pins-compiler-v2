@@ -1,163 +1,20 @@
-fun address(num: int) : ^int = ^num;
-fun value(ptr: ^int) : int = ptr^;
+var a: int;
 
-fun delete(ptr: ^int) : void = del ptr;
-fun create(num: int) : ^int = (new num : ^int);
-
-#{Should output: (locations might vary)
-  AstFunDecl(address) @(1.1-1.3)
-      Frame(_address,16=16+0+0,T0,T1,1)
-    {Pars}
-      AstParDecl(num) @(1.13-1.15)
-          RelAccess(8,8,2)
-        AstAtomType(INT) @(1.18-1.20)
-          describesType:
-            Int
-    AstPtrType @(1.25-1.25)
-      describesType:
-        Ptr
-          Int
-      AstAtomType(INT) @(1.26-1.28)
-        describesType:
-          Int
-    AstPreExpr(PTR) @(1.32-1.32)
-      exprOfType:
-        Ptr
-          Int
-      exprImc:
-        MEM
-          BINOP
-            TEMP(T0)
-            CONST(8)
-      AstNameExpr(num) @(1.33-1.35)
-        declaredAt: 1.13-1.15
-        exprOfType:
-          Int
-        exprImc:
-          MEM
-            BINOP
-              TEMP(T0)
-              CONST(8)
-  AstFunDecl(value) @(2.1-2.3)
-      Frame(_value,16=16+0+0,T2,T3,1)
-    {Pars}
-      AstParDecl(ptr) @(2.11-2.13)
-          RelAccess(8,8,2)
-        AstPtrType @(2.16-2.16)
-          describesType:
-            Ptr
-              Int
-          AstAtomType(INT) @(2.17-2.19)
-            describesType:
-              Int
-    AstAtomType(INT) @(2.24-2.26)
-      describesType:
-        Int
-    AstPstExpr(PTR) @(2.33-2.33)
-      exprOfType:
-        Int
-      exprImc:
-        MEM
-          MEM
-            BINOP
-              TEMP(T2)
-              CONST(8)
-      AstNameExpr(ptr) @(2.30-2.32)
-        declaredAt: 2.11-2.13
-        exprOfType:
-          Ptr
-            Int
-        exprImc:
-          MEM
-            BINOP
-              TEMP(T2)
-              CONST(8)
-  AstFunDecl(delete) @(4.1-4.3)
-      Frame(_delete,16=16+0+0,T4,T5,1)
-    {Pars}
-      AstParDecl(ptr) @(4.12-4.14)
-          RelAccess(8,8,2)
-        AstPtrType @(4.17-4.17)
-          describesType:
-            Ptr
-              Int
-          AstAtomType(INT) @(4.18-4.20)
-            describesType:
-              Int
-    AstAtomType(VOID) @(4.25-4.28)
-      describesType:
-        Void
-    AstPreExpr(DEL) @(4.32-4.34)
-      exprOfType:
-        Void
-      exprImc:
-        CALL(_del)
-          TEMP(T4)
-          MEM
-            BINOP
-              TEMP(T4)
-              CONST(8)
-      AstNameExpr(ptr) @(4.36-4.38)
-        declaredAt: 4.12-4.14
-        exprOfType:
-          Ptr
-            Int
-        exprImc:
-          MEM
-            BINOP
-              TEMP(T4)
-              CONST(8)
-  AstFunDecl(create) @(5.1-5.3)
-      Frame(_create,16=16+0+0,T6,T7,1)
-    {Pars}
-      AstParDecl(num) @(5.12-5.14)
-          RelAccess(8,8,2)
-        AstAtomType(INT) @(5.17-5.19)
-          describesType:
-            Int
-    AstPtrType @(5.24-5.24)
-      describesType:
-        Ptr
-          Int
-      AstAtomType(INT) @(5.25-5.27)
-        describesType:
-          Int
-    AstCastExpr @(5.40-5.40)
-      exprOfType:
-        Ptr
-          Int
-      exprImc:
-        CALL(_new)
-          TEMP(T6)
-          MEM
-            BINOP
-              TEMP(T6)
-              CONST(8)
-      AstPreExpr(NEW) @(5.32-5.34)
-        exprOfType:
-          Ptr
-            Void
-        exprImc:
-          CALL(_new)
-            TEMP(T6)
-            MEM
-              BINOP
-                TEMP(T6)
-                CONST(8)
-        AstNameExpr(num) @(5.36-5.38)
-          declaredAt: 5.12-5.14
-          exprOfType:
-            Int
-          exprImc:
-            MEM
-              BINOP
-                TEMP(T6)
-                CONST(8)
-      AstPtrType @(5.42-5.42)
-        describesType:
-          Ptr
-            Int
-        AstAtomType(INT) @(5.43-5.45)
-          describesType:
-            Int
-}#
+fun f1(): int = {
+  (a where var num: int; fun f2(): int = {
+    (a where fun f3(): int = {
+      ({
+        f4();
+        f3();
+        f2();
+        f1();
+        num = 5;
+      } where fun f4(): int = {
+        a;
+      };);
+      a;
+    };);  
+    a;
+  };);
+  a;
+};

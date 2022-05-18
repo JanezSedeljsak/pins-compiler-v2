@@ -62,8 +62,8 @@ public class ExprGenerator implements AstVisitor<ImcExpr, Stack<MemFrame>> {
 
 		// parent FP
 		ImcExpr slArg = new ImcTEMP(frames.peek().FP);
-		int diff = funcFrame.depth - frames.peek().depth - 1;
-		for (int i = 1; i < diff; i++) {
+		int diff = frames.peek().depth - funcFrame.depth;
+		for (int i = 0; i <= diff; i++) {
 			slArg = new ImcMEM(slArg);
 		}
 
