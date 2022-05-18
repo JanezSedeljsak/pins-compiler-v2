@@ -35,10 +35,9 @@ public class ExprGenerator implements AstVisitor<ImcExpr, Stack<MemFrame>> {
         ImcExpr right = binExpr.sndSubExpr.accept(this, frames);
 
 		if (binExpr.oper == AstBinExpr.Oper.ARR) {
-			ImcMEM mem = new ImcMEM(left);
 			ImcCONST itemSize = new ImcCONST(SemAn.exprOfType.get(binExpr).size());
 
-			ImcBINOP add = new ImcBINOP(ImcBINOP.Oper.ADD, mem.addr, new ImcBINOP(ImcBINOP.Oper.MUL, right, itemSize));
+			ImcBINOP add = new ImcBINOP(ImcBINOP.Oper.ADD, left, new ImcBINOP(ImcBINOP.Oper.MUL, right, itemSize));
 			ImcMEM expr = new ImcMEM(add);
 			ImcGen.exprImc.put(binExpr, expr);
 			return expr;
@@ -77,7 +76,6 @@ public class ExprGenerator implements AstVisitor<ImcExpr, Stack<MemFrame>> {
 			offset += SemAn.exprOfType.get(arg).size();
 		}
 
-
 		ImcCALL expr = new ImcCALL(funcFrame.label, offsets, parsVector);
 		ImcGen.exprImc.put(callExpr, expr);
 		return expr;
@@ -95,7 +93,8 @@ public class ExprGenerator implements AstVisitor<ImcExpr, Stack<MemFrame>> {
 		ImcExpr expr;
 		switch (constExpr.kind) {
 			case CHAR:
-				expr = new ImcCONST((long) constExpr.name.charAt(1));
+				String charWrapper = constExpr.name;
+				expr = new ImcCONST((long) charWrapper.charAt(charWrapper.length() == 3 ? 1 : 2));
 				break;
 			case INT:
 				expr = new ImcCONST(Long.parseLong(constExpr.name));
@@ -177,7 +176,7 @@ public class ExprGenerator implements AstVisitor<ImcExpr, Stack<MemFrame>> {
 				res = new ImcCALL(new MemLabel("del"), new Vector<>(Arrays.asList(offsets)), delVector);
 				break;
 			case PTR:
-				ImcMEM mem = new ImcMEM(expr);
+				ImcMEM mem = (ImcMEM)expr;
 				ImcGen.exprImc.put(preExpr, mem.addr);
 				return mem.addr;
 		}
