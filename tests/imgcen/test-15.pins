@@ -1,20 +1,55 @@
-var a: int;
+var num: int;
 
-fun f1(): int = {
-  (a where var num: int; fun f2(): int = {
-    (a where fun f3(): int = {
-      ({
-        f4();
-        f3();
-        f2();
-        f1();
-        num = 5;
-      } where fun f4(): int = {
-        a;
-      };);
-      a;
-    };);  
-    a;
-  };);
-  a;
+fun main() : int = {
+  num = 10;
+  printInt((^num)^);
+  newLine();
+  0;
 };
+
+fun newLine(): void = putChar((10 : char));
+
+fun printInt(num : int) : void = ({
+    rev = 0;
+    numZeros = 0;
+    #{ Handle signedness }#
+    if num < 0 then
+        num = -num;
+        putChar('-');
+    else
+        if num == 0 then
+            numZeros = 1;
+        end;
+    end;
+
+    #{ Reverse number }#
+    while num do
+        rev = rev * 10;
+        rev = rev + (num % 10);
+        num = num / 10;
+        numZeros = numZeros + 1;
+    end;
+
+    #{ Print reversed }#
+    while rev do
+        c = (rev % 10) + ('0' : int);
+        putChar((c : char));
+        rev = rev / 10;
+        numZeros = numZeros - 1;
+    end;
+
+    #{ Print trailing zeros }#
+    while numZeros do
+        putChar('0');
+        numZeros = numZeros - 1;
+    end;
+
+} where
+    var c : int;
+    var rev : int;
+    var numZeros : int;
+);
+
+#{ Forward declaring }#
+fun putChar(c : char) : void = none;
+fun getChar() : char = (0 : char);

@@ -230,7 +230,12 @@ public class TypeChecker extends AstFullVisitor<SemType, Object> {
                 if (t1.actualType() instanceof SemArr || t2.actualType() instanceof SemArr) {
                     throw new Report.Error(binExpr.location, String.format("Operation %s in not supported for Arrays (got %s and %s)", binExpr.oper.name(), stype(t1), stype(t2)));
                 }
-                break;
+                if (binExpr.oper != AstBinExpr.Oper.ARR && !validateTwoTypes(t1, t2)) {
+                    throw new Report.Error(binExpr.location, String.format("Cannot compare types %s and %s", stype(t1), stype(t2)));
+                }
+                SemInt compareResultType = new SemInt();
+                SemAn.exprOfType.put(binExpr, compareResultType);
+		        return compareResultType;
             case AND:
             case OR:
             case MUL:

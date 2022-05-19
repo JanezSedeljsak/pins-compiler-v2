@@ -8,6 +8,7 @@ import pins.phase.synan.*;
 import pins.phase.seman.*;
 import pins.phase.memory.*;
 import pins.phase.imcgen.*;
+import pins.phase.imclin.*;
 
 /**
  * The PINS'22 compiler.
@@ -15,7 +16,7 @@ import pins.phase.imcgen.*;
 public class Compiler {
 
 	/** All phases of the compiler. */
-	private static final String phases = "none|lexan|synan|abstr|seman|memory|imcgen";
+	private static final String phases = "none|lexan|synan|abstr|seman|memory|imcgen|imclin";
 
 	/** Values of command line arguments. */
 	private static HashMap<String, String> cmdLine = new HashMap<String, String>();
@@ -120,7 +121,7 @@ public class Compiler {
 					ast.log("");
 					break;
 				}
-				
+
 				// Intermediate code generation.
 				try (ImcGen imcgen = new ImcGen()) {
 					ast.accept(new CodeGenerator(), null);
@@ -129,6 +130,18 @@ public class Compiler {
 					ast.log("");
 					break;
 				}
+				
+				// Linearization of intermediate code.
+				try (ImcLin imclin = new ImcLin()) {
+					ast.accept(new ChunkGenerator(), null);
+
+					Interpreter interpreter = new Interpreter(ImcLin.dataChunks(), ImcLin.codeChunks());
+					System.out.println("EXIT CODE: " + interpreter.run("_main"));
+				}
+				if (cmdLine.get("--target-phase").equals("imclin"))
+					break;
+				
+				break;
 
 			}
 
