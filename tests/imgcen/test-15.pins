@@ -1,55 +1,18 @@
-var num: int;
+var ptr: ^int;
+var address: int;
 
-fun main() : int = {
-  num = 10;
-  printInt((^num)^);
-  newLine();
+fun main(): int = {
+
+  ptr = (new 16: ^int);
+  ptr^ = 65;
+  putChar((ptr^ : char));
+  putChar((10 : char));
+  
+  del ptr;
+  putChar((ptr^ : char));
+  putChar((10 : char));
   0;
 };
 
-fun newLine(): void = putChar((10 : char));
-
-fun printInt(num : int) : void = ({
-    rev = 0;
-    numZeros = 0;
-    #{ Handle signedness }#
-    if num < 0 then
-        num = -num;
-        putChar('-');
-    else
-        if num == 0 then
-            numZeros = 1;
-        end;
-    end;
-
-    #{ Reverse number }#
-    while num do
-        rev = rev * 10;
-        rev = rev + (num % 10);
-        num = num / 10;
-        numZeros = numZeros + 1;
-    end;
-
-    #{ Print reversed }#
-    while rev do
-        c = (rev % 10) + ('0' : int);
-        putChar((c : char));
-        rev = rev / 10;
-        numZeros = numZeros - 1;
-    end;
-
-    #{ Print trailing zeros }#
-    while numZeros do
-        putChar('0');
-        numZeros = numZeros - 1;
-    end;
-
-} where
-    var c : int;
-    var rev : int;
-    var numZeros : int;
-);
-
-#{ Forward declaring }#
 fun putChar(c : char) : void = none;
 fun getChar() : char = (0 : char);

@@ -200,6 +200,8 @@ public class ExprGenerator implements AstVisitor<ImcExpr, Stack<MemFrame>> {
 		if (stmt instanceof ImcSTMTS) {
 			ImcSTMTS stmts = (ImcSTMTS) stmt;
 			ImcStmt lastStmt = stmts.stmts.get(stmts.stmts.size() - 1);
+			stmts.stmts.remove(stmts.stmts.size() - 1); // remove last stmt to prevent double execution
+
 			if (lastStmt instanceof ImcESTMT) {
 				ImcExpr res = new ImcSEXPR(stmt, ((ImcESTMT)lastStmt).expr);
 				ImcGen.exprImc.put(stmtExpr, res);
