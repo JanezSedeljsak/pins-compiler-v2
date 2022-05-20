@@ -5,16 +5,9 @@
             "type": "java",
             "name": "Launch Compiler",
             "request": "launch",
-            "mainClass": "pins.Compiler",
-            "projectName": ""
-        },
-        {
-            "type": "java",
-            "name": "Launch Compiler",
-            "request": "launch",
             "mainClass": "pins/pins.Compiler",
             "projectName": "src_fc0e0df4",
-            "args": "./tests/test_13.c"
+            "args": "./tests/test_14.c"
         }
     ]
 }

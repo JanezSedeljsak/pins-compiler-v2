@@ -606,18 +606,19 @@ public class SynAn implements AutoCloseable {
 					str = str.substring(1, str.length() - 1); // remove first and last char
 
 					int i = 0;
-					for (i = 0; i < str.length() && i < 9; i++) {
+					for (i = 0; i < str.length() && i < 19; i++) {
 						argsVector.add(new AstConstExpr(peek().location, AstConstExpr.Kind.CHAR, String.format("\'%s\'", str.charAt(i))));
 					}
 
-					if (i == 9) {
+					i++;
+					if (i == 19) {
 						argsVector.add(new AstConstExpr(peek().location, AstConstExpr.Kind.CHAR, String.format("\'%s\'", (char)10)));
 					} else {
 						argsVector.add(new AstConstExpr(peek().location, AstConstExpr.Kind.CHAR, String.format("\'%s\'", (char)10)));
-						i++;
-						for (; i < 10; i++) {
+						for (; i < 20; i++) {
 							argsVector.add(new AstConstExpr(peek().location, AstConstExpr.Kind.CHAR, "\' \'"));
 						}
+						
 					}
 
 					ASTs<AstExpr> args = new ASTs<>(null, argsVector);
