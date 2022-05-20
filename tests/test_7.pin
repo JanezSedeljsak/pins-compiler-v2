@@ -1,7 +1,9 @@
 import std;
+import ints;
 
 var x: int;
 var memo: ^int;
+var index: int;
 
 fun fib(num: int): int = ({
     if num < 2 then
@@ -23,7 +25,12 @@ fun main(): int = {
     x = 200;
     memo = make_cache(x*8);
     fib(x);
-    last_fib_index(memo, x);
+    index = last_fib_index(memo, x);
+    printInt(index);
+    newLine();
+    putInt(fib(index));
+    newLine();
+    0;
 };
 
 fun make_cache(size: int): ^int = ({
@@ -45,11 +52,9 @@ fun last_fib_index(memo: ^int, size: int): int = ({
         i = i + 1;
     end;
 
-    i;
+    i - 1;
 
 } where var i: int;);
 
 fun address(ptr: ^int, i: int): ^int = (((ptr: int) + i*8): ^int);
-fun putChar(c : char) : void = none;
-fun getChar() : char = (0 : char);
 

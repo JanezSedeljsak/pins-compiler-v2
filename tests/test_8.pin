@@ -43,11 +43,11 @@ fun main() : int = ({
     var nums : ^int;
     fun getIdx(arr : ^int, idx : int) : ^int = (((arr : int) + idx * 8) : ^int);
     fun printNums(arr : ^int, n : int) : void = ({
-        printInt(getIdx(arr, 0)^);
+        putInt(getIdx(arr, 0)^);
         i = 1;
         while i < n do
             putChar(',');putChar(' ');
-            printInt(getIdx(arr, i)^);
+            putInt(getIdx(arr, i)^);
             i = i + 1;
         end;
         putChar((10 : char));

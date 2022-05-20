@@ -1,2 +1,5 @@
 fun putChar(c : char) : void = none;
 fun getChar() : char = (0 : char);
+fun newLine() : void = putChar((10 : char));
+
+fun putInt(c : int) : void = none;
