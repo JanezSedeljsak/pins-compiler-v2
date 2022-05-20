@@ -4,6 +4,8 @@ import pins.phase.lexan.*;
 import pins.data.symbol.*;
 import pins.common.report.*;
 import pins.data.ast.*;
+
+import java.util.HashMap;
 import java.util.Vector;
 
 public class SynAn implements AutoCloseable {
@@ -12,6 +14,9 @@ public class SynAn implements AutoCloseable {
 	private Symbol current = null, prevSymb = null;
 	private AST ast = null;
 	private boolean dontMove = false;
+
+	private static HashMap<String, Boolean> importedMethods = new HashMap<>();
+	private static HashMap<String, Boolean> importedLibs = new HashMap<>();
 
 	public SynAn(LexAn lexan) {
 		this.lexan = lexan;
@@ -78,6 +83,7 @@ public class SynAn implements AutoCloseable {
 		parseDecl(parentNode);
 	}
 
+	@SuppressWarnings("unchecked")
 	private void parseDecl(Vector<AstDecl> parentNode) {
 		move();
 		AstDecl declNode;
@@ -87,6 +93,33 @@ public class SynAn implements AutoCloseable {
 			case EOF:
 			case RIGHT_PARENTHESIS:
 				dontMove = true;
+				return;
+			case IMPORT:
+				String libName = checkExpected(Token.IDENTIFIER).lexeme();
+				checkExpected(Token.SEMICOLON);
+				AST ast = null;
+
+				try (LexAn lexan = new LexAn(String.format("./lib/%s.pins", libName)); SynAn synan = new SynAn(lexan)) {
+					ast = synan.parser();
+				} catch (Exception ex) {
+					throw new Report.Error("Could not import lib - " + libName);
+				}
+				
+				if (importedLibs.get(libName) == null) {
+					Report.info(String.format("You are now using <%s> lib", libName));
+					importedLibs.put(libName, true);
+					if (ast instanceof ASTs) {
+						Vector<AstDecl> importedDeclerations = ((ASTs<AstDecl>)ast).asts();
+						for (AstDecl importDecl: importedDeclerations) {
+							if (importedMethods.get(importDecl.name) == null) {
+								importedMethods.put(importDecl.name, true);
+								parentNode.add(importDecl);
+							}
+						}
+					}
+				}
+				
+				parseDecls(parentNode);
 				return;
 			case TYP:
 				String name = checkExpected(Token.IDENTIFIER).lexeme();

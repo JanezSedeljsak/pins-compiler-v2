@@ -1,3 +1,5 @@
+import std;
+
 var x: int;
 var memo: ^int;
 
@@ -37,5 +39,3 @@ fun make_cache(size: int): ^int = ({
 } where var temp: ^int; var i: int;);
 
 fun address(ptr: ^int, i: int): ^int = (((ptr: int) + i*8): ^int);
-fun putChar(c : char) : void = none;
-fun getChar() : char = (0 : char);

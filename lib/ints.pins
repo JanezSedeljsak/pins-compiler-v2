@@ -1,0 +1,75 @@
+import std;
+
+fun readInt() : int = ({
+    num = 0;
+    prevC = '0';
+    c = getChar();
+
+    #{ Consume until we get a number }#
+    while c < '0' | c > '9' do
+        prevC = c;
+        c = getChar();
+    end;
+
+    sign = 0;
+    if prevC == '-' then
+        sign = 1;
+    end;
+
+    #{ Parse number }#
+    while c >= '0' & c <= '9' do
+        num = num * 10 + ((c : int) - ('0' : int));
+        c = getChar();
+    end;
+
+    if sign then
+        num = -num;
+    end;
+    num;
+} where
+    var c : char;
+    var prevC : char;
+    var num : int;
+    var sign : int;
+);
+
+fun printInt(num : int) : void = ({
+    rev = 0;
+    numZeros = 0;
+    #{ Handle signedness }#
+    if num < 0 then
+        num = -num;
+        putChar('-');
+    else
+        if num == 0 then
+            numZeros = 1;
+        end;
+    end;
+
+    #{ Reverse number }#
+    while num do
+        rev = rev * 10;
+        rev = rev + (num % 10);
+        num = num / 10;
+        numZeros = numZeros + 1;
+    end;
+
+    #{ Print reversed }#
+    while rev do
+        c = (rev % 10) + ('0' : int);
+        putChar((c : char));
+        rev = rev / 10;
+        numZeros = numZeros - 1;
+    end;
+
+    #{ Print trailing zeros }#
+    while numZeros do
+        putChar('0');
+        numZeros = numZeros - 1;
+    end;
+
+} where
+    var c : int;
+    var rev : int;
+    var numZeros : int;
+);

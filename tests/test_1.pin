@@ -1,3 +1,6 @@
+import std;
+import ints;
+
 fun main(): int = {
     num = 0;
     while num < 10 do
@@ -12,13 +15,9 @@ fun main(): int = {
         num = num + 1;
     end;
 
+    printInt(100);
     0;
 };
 
 var num: int;
 var arr: [10]char;
-
-
-#{ Forward declaring }#
-fun putChar(c : char) : void = none;
-fun getChar() : char = (0 : char);

@@ -24,7 +24,7 @@ public enum Token {
 	
 	/* math */
 	MULTIPLY("*"), DIVIDE("/"), MOD("%"), PLUS("+"),
-	MINUS("-"), POINTER("^"), ASSIGN("="),
+	MINUS("-"), POINTER("^"), ASSIGN("="), IMPORT("import"),
 
 	IDENTIFIER("[A-Za-z_][A-Za-z0-9_]*", true);
 
