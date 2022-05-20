@@ -1,4 +1,4 @@
-import string_utils;
+import string;
 import std;
 
 var hello: string;

@@ -1,5 +1,5 @@
 import std;
-import string_utils;
+import string;
 
 var num: int;
 var num2: int;

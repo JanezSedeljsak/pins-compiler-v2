@@ -1,6 +1,6 @@
 import std;
 import math;
-import string_utils;
+import string;
 
 var str: string;
 

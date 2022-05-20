@@ -1,0 +1,1 @@
+fun time(): int = 0;

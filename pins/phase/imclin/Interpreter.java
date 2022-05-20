@@ -384,6 +384,11 @@ public class Interpreter {
 				memST(tempLD(SP), y, false);
 				return;
 			}
+			if (imcCall.label.name.equals("_time")) {
+				long time = System.nanoTime();
+				memST(tempLD(SP), time, false);
+				return;
+			}
 			funCall(imcCall.label);
 		}
 

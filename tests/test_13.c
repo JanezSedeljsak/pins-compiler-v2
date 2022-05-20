@@ -42,7 +42,7 @@ where
 fun fill(array : ^[50]int, size : int) : void = ({
     i = 0;
     while (i < size) do
-        array^[i] = random(0, 100);
+        array^[i] = random(5, 25);
         i = i + 1;
     end;
 }
