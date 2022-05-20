@@ -363,6 +363,27 @@ public class Interpreter {
 				memST(tempLD(SP), (long) c, false);
 				return;
 			}
+			if (imcCall.label.name.equals("_log")) {
+				Long param1 = memLD(tempLD(SP, false) + 1 * 8, false);
+				memST(tempLD(SP), (long) Math.log10((double)param1), false);
+				return;
+			}
+			if (imcCall.label.name.equals("_sqrt")) {
+				Long param1 = memLD(tempLD(SP, false) + 1 * 8, false);
+				memST(tempLD(SP), (long) Math.sqrt((double)param1), false);
+				return;
+			}
+			if (imcCall.label.name.equals("_random")) {
+				Long param1 = memLD(tempLD(SP, false) + 1 * 8, false);
+				Long param2 = memLD(tempLD(SP, false) + 2 * 8, false);
+
+				double random = Math.random();
+				double x = random*param2;
+				long y = (long)x + param1;
+
+				memST(tempLD(SP), y, false);
+				return;
+			}
 			funCall(imcCall.label);
 		}
 

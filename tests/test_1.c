@@ -1,5 +1,4 @@
 import std;
-import ints;
 
 fun main(): int = {
     num = 0;
@@ -15,7 +14,7 @@ fun main(): int = {
         num = num + 1;
     end;
 
-    printInt(100);
+    writeInt(100);
     0;
 };
 

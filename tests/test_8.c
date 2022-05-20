@@ -1,18 +1,14 @@
 import std;
-import ints;
-
-#{
-#  Reads 'n' numbers, sorts them and prints them.
-}#
+import math;
 
 fun main() : int = ({
     putChar('N');putChar('?');putChar(' ');
-    n = readInt();
+    n = random(5, 15);
     nums = ((new (n * 8)) : ^int);
 
     i = 0;
     while i < n do
-        getIdx(nums, i)^ = readInt();
+        getIdx(nums, i)^ = random(5, 50);
         i = i + 1;
     end;
 

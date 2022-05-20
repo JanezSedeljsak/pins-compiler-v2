@@ -1,5 +1,15 @@
-import std;
-import ints;
+fun putChar(c : char): void = none;
+fun getChar(): char = (0 : char);
+
+fun putInt(num : int): void = none;
+fun getInt(): int = 0;
+
+fun endl(): void = putChar((10 : char));
+
+fun writeInt(num: int): void = {
+    putInt(num);
+    endl();
+};
 
 var x: int;
 var memo: ^int;
@@ -26,10 +36,8 @@ fun main(): int = {
     memo = make_cache(x*8);
     fib(x);
     index = last_fib_index(memo, x);
-    printInt(index);
-    newLine();
-    putInt(fib(index));
-    newLine();
+    writeInt(index);
+    writeInt(fib(index));
     0;
 };
 

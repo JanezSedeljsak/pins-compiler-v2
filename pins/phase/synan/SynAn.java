@@ -99,7 +99,7 @@ public class SynAn implements AutoCloseable {
 				checkExpected(Token.SEMICOLON);
 				AST ast = null;
 
-				try (LexAn lexan = new LexAn(String.format("./lib/%s.pins", libName)); SynAn synan = new SynAn(lexan)) {
+				try (LexAn lexan = new LexAn(String.format("./lib/%s.h", libName)); SynAn synan = new SynAn(lexan)) {
 					ast = synan.parser();
 				} catch (Exception ex) {
 					throw new Report.Error("Could not import lib - " + libName);
@@ -111,7 +111,7 @@ public class SynAn implements AutoCloseable {
 					if (ast instanceof ASTs) {
 						Vector<AstDecl> importedDeclerations = ((ASTs<AstDecl>)ast).asts();
 						for (AstDecl importDecl: importedDeclerations) {
-							if (importedMethods.get(importDecl.name) == null) {
+							if (importedMethods.get(importDecl.name) == null && importDecl.name.charAt(0) != '_' && !importDecl.name.equals("main")) {
 								importedMethods.put(importDecl.name, true);
 								parentNode.add(importDecl);
 							}
@@ -597,7 +597,36 @@ public class SynAn implements AutoCloseable {
 			case SEMICOLON:
 				return new AstExprStmt(fromTo(expr.location), expr);
 			case ASSIGN:
-				AstExpr expr2 = parseExpr();
+				move();
+
+				AstExpr expr2 = null;
+				if (peek().token == Token.STRING_LITERAL) {
+					Vector<AstExpr> argsVector = new Vector<>();
+					String str = peek().lexeme();
+					str = str.substring(1, str.length() - 1); // remove first and last char
+
+					int i = 0;
+					for (i = 0; i < str.length() && i < 9; i++) {
+						argsVector.add(new AstConstExpr(peek().location, AstConstExpr.Kind.CHAR, String.format("\'%s\'", str.charAt(i))));
+					}
+
+					if (i == 9) {
+						argsVector.add(new AstConstExpr(peek().location, AstConstExpr.Kind.CHAR, String.format("\'%s\'", (char)10)));
+					} else {
+						argsVector.add(new AstConstExpr(peek().location, AstConstExpr.Kind.CHAR, String.format("\'%s\'", (char)10)));
+						i++;
+						for (; i < 10; i++) {
+							argsVector.add(new AstConstExpr(peek().location, AstConstExpr.Kind.CHAR, "\' \'"));
+						}
+					}
+
+					ASTs<AstExpr> args = new ASTs<>(null, argsVector);
+					expr2 = new AstCallExpr(peek().location, "make_string", args);
+				} else {
+					dontMove = true;
+					expr2 = parseExpr();
+				}
+				
 				checkExpected(Token.SEMICOLON);
 				return new AstAssignStmt(fromTo(expr.location), expr, expr2);
 			default:

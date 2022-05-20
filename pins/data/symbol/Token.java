@@ -26,6 +26,8 @@ public enum Token {
 	MULTIPLY("*"), DIVIDE("/"), MOD("%"), PLUS("+"),
 	MINUS("-"), POINTER("^"), ASSIGN("="), IMPORT("import"),
 
+	STRING_LITERAL("\"[^\"\\\\]*(\\\\.[^\"\\\\]*)*\"?", true),
+
 	IDENTIFIER("[A-Za-z_][A-Za-z0-9_]*", true);
 
 	private String match;
