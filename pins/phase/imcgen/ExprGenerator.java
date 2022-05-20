@@ -29,73 +29,26 @@ public class ExprGenerator implements AstVisitor<ImcExpr, Stack<MemFrame>> {
 		return code;
 	}
 
+	@Override
 	public ImcExpr visit(AstBinExpr binExpr, Stack<MemFrame> frames) {
 		ImcExpr left = binExpr.fstSubExpr.accept(this, frames);
-		ImcExpr right = binExpr.sndSubExpr.accept(this, frames);
+        ImcExpr right = binExpr.sndSubExpr.accept(this, frames);
 
-		ImcBINOP binop = null;
+		if (binExpr.oper == AstBinExpr.Oper.ARR) {
+			ImcCONST itemSize = new ImcCONST(SemAn.exprOfType.get(binExpr).size());
 
-		switch (binExpr.oper) {
-			case ADD -> {
-				binop = new ImcBINOP(ImcBINOP.Oper.ADD, left, right);
-			}
-			case SUB -> {
-				binop = new ImcBINOP(ImcBINOP.Oper.SUB, left, right);
-			}
-			case MUL -> {
-				binop = new ImcBINOP(ImcBINOP.Oper.MUL, left, right);
-			}
-			case DIV -> {
-				binop = new ImcBINOP(ImcBINOP.Oper.DIV, left, right);
-			}
-			case MOD -> {
-				binop = new ImcBINOP(ImcBINOP.Oper.MOD, left, right);
-			}
-			case AND -> {
-				binop = new ImcBINOP(ImcBINOP.Oper.AND, left, right);
-			}
-			case OR -> {
-				binop = new ImcBINOP(ImcBINOP.Oper.OR, left, right);
-			}
-			case EQU -> {
-				binop = new ImcBINOP(ImcBINOP.Oper.EQU, left, right);
-			}
-			case NEQ -> {
-				binop = new ImcBINOP(ImcBINOP.Oper.NEQ, left, right);
-			}
-			case LEQ -> {
-				binop = new ImcBINOP(ImcBINOP.Oper.LEQ, left, right);
-			}
-			case LTH ->  {
-				binop = new ImcBINOP(ImcBINOP.Oper.LTH, left, right);
-			}
-			case GEQ -> {
-				binop = new ImcBINOP(ImcBINOP.Oper.GEQ, left, right);
-			}
-			case GTH -> {
-				binop = new ImcBINOP(ImcBINOP.Oper.GTH, left, right);
-			}
-			case ARR -> {
-				// The array indexing operator is a special case, since it is not a simple left-right operator. It
-				// returns the value of the array element.
-
-				// The left sub-expression is the array.
-				ImcMEM mem = (ImcMEM)(left);
-				// Get the size of an array element.
-				long size = SemAn.exprOfType.get(binExpr).size();
-
-				// First multiply the index by the size of an array element.
-				ImcBINOP mul = new ImcBINOP(ImcBINOP.Oper.MUL, right, new ImcCONST(size));
-				// Add the index to the array address.
-				ImcBINOP add = new ImcBINOP(ImcBINOP.Oper.ADD, mem.addr, mul);
-				ImcMEM fullMem = new ImcMEM(add);
-				ImcGen.exprImc.put(binExpr, fullMem);
-				return fullMem;
-			}
+			
+			ImcBINOP add = new ImcBINOP(ImcBINOP.Oper.ADD, ((ImcMEM)left).addr, new ImcBINOP(ImcBINOP.Oper.MUL, right, itemSize));
+			ImcMEM expr = new ImcMEM(add);
+			ImcGen.exprImc.put(binExpr, expr);
+			return expr;
 		}
-		ImcGen.exprImc.put(binExpr, binop);
-		return binop;
+		
+		ImcExpr expr = new ImcBINOP(ImcBINOP.Oper.valueOf(binExpr.oper.toString()), left, right);
+        ImcGen.exprImc.put(binExpr, expr);
+        return expr;
 	}
+	
 	@Override
 	public ImcExpr visit(AstCallExpr callExpr, Stack<MemFrame> frames) {
 		if (callExpr.args != null)
@@ -252,8 +205,8 @@ public class ExprGenerator implements AstVisitor<ImcExpr, Stack<MemFrame>> {
 
 			if (lastStmt instanceof ImcESTMT) {
 				ImcExpr expr = ((ImcESTMT)lastStmt).expr;
+				stmts.stmts.remove(stmts.stmts.size() - 1);
 				ImcExpr res = new ImcSEXPR(stmt, expr);
-				ImcGen.ownerOfExpr.put(res, stmts);
 				ImcGen.exprImc.put(stmtExpr, res);
 				return res;
 			}

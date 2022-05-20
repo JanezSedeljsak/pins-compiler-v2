@@ -16,9 +16,6 @@ public class ImcGen implements AutoCloseable {
 	/** Maps expressions to intermediate code. */
 	public static final HashMap<AstExpr, ImcExpr> exprImc = new HashMap<AstExpr, ImcExpr>(0);
 
-	/** Maps expressions to intermediate code. */
-	public static final HashMap<ImcExpr, ImcSTMTS> ownerOfExpr = new HashMap<>(0);
-
 	/**
 	 * Constructs a new phase for intermediate code generation.
 	 */
