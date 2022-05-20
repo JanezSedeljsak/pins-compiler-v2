@@ -1,3 +1,24 @@
-var a : int;
-fun b() : int = a;
-fun c(a : int) : int = a;
+fun main(): int = {
+    num = 0;
+    while num < 10 do
+        arr[num] = (num + 65 : char);
+        num = num + 1;
+    end;
+
+    num = 0;
+    while num < 10 do
+        putChar(arr[num]);
+        putChar((10 : char));
+        num = num + 1;
+    end;
+
+    0;
+};
+
+var num: int;
+var arr: [10]char;
+
+
+#{ Forward declaring }#
+fun putChar(c : char) : void = none;
+fun getChar() : char = (0 : char);

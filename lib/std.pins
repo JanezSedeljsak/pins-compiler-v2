@@ -1,0 +1,2 @@
+fun putChar(c : char) : void = none;
+fun getChar() : char = (0 : char);

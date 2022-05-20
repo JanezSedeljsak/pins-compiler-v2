@@ -5,7 +5,7 @@ import java.util.*;
 import pins.data.ast.*;
 import pins.data.ast.visitor.*;
 import pins.data.imc.code.expr.*;
-import pins.data.imc.code.stmt.ImcMOVE;
+import pins.data.imc.code.stmt.ImcSTMTS;
 import pins.data.mem.*;
 import pins.phase.memory.*;
 
@@ -20,9 +20,11 @@ public class CodeGenerator extends AstFullVisitor<Object, Stack<MemFrame>> {
 		MemFrame frame = Memory.frames.get(funDecl);
 		arg.add(frame);
 		ImcExpr expr = funDecl.expr.accept(new ExprGenerator(), arg);
-		ImcTEMP rvTemp = new ImcTEMP(arg.peek().RV);
-		ImcMOVE writeRV = new ImcMOVE(rvTemp, expr);
-		//ImcGen.exprImc.put(funDecl.expr, new ImcSEXPR(writeRV, rvTemp));
+		ImcSTMTS stmts = ImcGen.ownerOfExpr.get(expr);
+		if (stmts != null && stmts.stmts.size() > 0) {
+			// remove last element it will be executed in parent
+			stmts.stmts.remove(stmts.stmts.size() - 1);
+		}
 		arg.pop();
 		
 		return null;

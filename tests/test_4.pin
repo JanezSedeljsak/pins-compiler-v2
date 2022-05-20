@@ -1,7 +1,12 @@
-none 55+123-123'a''l''\\''\''nil
-(){}[],:;&|!==!=<><=>=*/%+-^=
-char del do else end fun if int new then typ var void where while
-names123 _lol123 Take321_
-#{asdasodha +123}# #{  #{ haha }# asfasdasdasd
+var ptr: ^int;
+var num: int;
 
-}# lol
+fun add(a: int, b: int): int = a + b;
+
+fun main(): int = {
+  num = 10;
+  ptr = ^num;
+
+  num = -500 + num;
+  ptr^;
+};

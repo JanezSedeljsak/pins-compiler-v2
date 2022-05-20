@@ -37,7 +37,8 @@ public class ExprGenerator implements AstVisitor<ImcExpr, Stack<MemFrame>> {
 		if (binExpr.oper == AstBinExpr.Oper.ARR) {
 			ImcCONST itemSize = new ImcCONST(SemAn.exprOfType.get(binExpr).size());
 
-			ImcBINOP add = new ImcBINOP(ImcBINOP.Oper.ADD, left, new ImcBINOP(ImcBINOP.Oper.MUL, right, itemSize));
+			
+			ImcBINOP add = new ImcBINOP(ImcBINOP.Oper.ADD, ((ImcMEM)left).addr, new ImcBINOP(ImcBINOP.Oper.MUL, right, itemSize));
 			ImcMEM expr = new ImcMEM(add);
 			ImcGen.exprImc.put(binExpr, expr);
 			return expr;
@@ -68,11 +69,12 @@ public class ExprGenerator implements AstVisitor<ImcExpr, Stack<MemFrame>> {
 		}
 
 		parsVector.add(slArg);
-		offsets.add(offset);
+		offsets.add(0L);
 		
 		for (AST arg: callExpr.args.asts()) {
 			ImcExpr argExpr = ImcGen.exprImc.get(arg);
 			parsVector.add(argExpr);
+			offsets.add(offset);
 			offset += SemAn.exprOfType.get(arg).size();
 		}
 
@@ -200,10 +202,11 @@ public class ExprGenerator implements AstVisitor<ImcExpr, Stack<MemFrame>> {
 		if (stmt instanceof ImcSTMTS) {
 			ImcSTMTS stmts = (ImcSTMTS) stmt;
 			ImcStmt lastStmt = stmts.stmts.get(stmts.stmts.size() - 1);
-			stmts.stmts.remove(stmts.stmts.size() - 1); // remove last stmt to prevent double execution
 
 			if (lastStmt instanceof ImcESTMT) {
-				ImcExpr res = new ImcSEXPR(stmt, ((ImcESTMT)lastStmt).expr);
+				ImcExpr expr = ((ImcESTMT)lastStmt).expr;
+				ImcExpr res = new ImcSEXPR(stmt, expr);
+				ImcGen.ownerOfExpr.put(res, stmts);
 				ImcGen.exprImc.put(stmtExpr, res);
 				return res;
 			}

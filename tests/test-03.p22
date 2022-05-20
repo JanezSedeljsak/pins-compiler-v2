@@ -1,4 +1,0 @@
-fun Metoda () : void = ptr = (new 5 : ^int);
-
-
-var ptr: ^int;

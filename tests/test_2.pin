@@ -1,19 +1,22 @@
-none,nil,0412341
--1000
-+1000
-(){}[],:;&|! == !=<><=>=*/%+-^= ===
-char del do else end fun if int new then typ var void where while
-TestIdentifier _2testIdentifier
-#{
-To je komentar, ki naj se ne izpise
-#{ To je gnezden komentar, ki naj se tudi ne izpise }#
-}#
+var ptr: ^int;
+var address: int;
 
-#{ keksi }}}}# VmesniID #{ tule je zlo pomembno da se vmesniId ispiše z zamikom }}#
+fun main(): int = {
 
-#{
+  ptr = (new 16: ^int);
+  ptr^ = 65; 
+  (((ptr: int) + 8): ^int)^ = 66; 
 
-}
-Nezaključen komentar, vseeno naj se ne izpise
-$~`@
-če pa dobimo kak izpis za nezaključen komentar pa nič narobe
+  address = (ptr : int); 
+
+  putChar(((address: ^int)^ : char)); 
+  putChar((10 : char));
+
+  putChar((((address + 8): ^int)^ : char)); 
+  putChar((10 : char));
+
+  0;
+};
+
+fun putChar(c : char) : void = none;
+fun getChar() : char = (0 : char);

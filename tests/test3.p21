@@ -1,9 +1,0 @@
-typ matrix_char_ptr = ^[10][10]^char;
-typ matrix_char = [10][10]char;
-
-var first: matrix_char_ptr;
-var second: matrix_char;
-
-fun main(): void = {
-	first = ^second;
-};
