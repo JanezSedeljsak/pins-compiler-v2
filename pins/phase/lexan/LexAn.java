@@ -74,6 +74,9 @@ public class LexAn implements AutoCloseable {
 				while ((next = getNextCharacter()) == '#') {}
 				if (next == '{') {
 					commentDepth++;
+				} else if (next == '}') {
+					unseen.add(next);
+					continue;
 				}
 
 			} else if (currChar == '}') {
@@ -152,7 +155,7 @@ public class LexAn implements AutoCloseable {
 				if (current == ' ' && builder.length() > 0 && prevIsCharStart) break;
 
 				// handle comment start
-				if (current == '#') {
+				if (current == '#' && builder.toString().charAt(0) != '\'') {
 					Symbol eofSymbol = passComment();
 					builder.setLength(0); // clear buffer after comment
 					if (eofSymbol != null) return eofSymbol;

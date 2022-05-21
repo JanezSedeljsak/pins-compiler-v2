@@ -384,6 +384,13 @@ public class Interpreter {
 				memST(tempLD(SP), y, false);
 				return;
 			}
+			if (imcCall.label.name.equals("_pow")) {
+				Long param1 = memLD(tempLD(SP, false) + 1 * 8, false);
+				Long param2 = memLD(tempLD(SP, false) + 2 * 8, false);
+
+				memST(tempLD(SP), (long)Math.pow(param1, param2), false);
+				return;
+			}
 			if (imcCall.label.name.equals("_time")) {
 				long time = System.nanoTime();
 				memST(tempLD(SP), time, false);
