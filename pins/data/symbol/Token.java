@@ -119,16 +119,23 @@ public enum Token {
 
 		for (Token token: Token.values()) {
 			if (token.match == null) continue;
-
-			if (Arrays.asList(plusPlusTokens).contains(token) && !EXPERIMENTAL) {
-				throw new Report.Error(
-					new Location(row, col), 
-					String.format("[%s] To use this feature you need to compile with '--experimental' flag", token.str()));
-			}
 			
 			if (!token.isRegex) {
-				if (fullMatch && token.match.equals(match)) return token;
+				if (fullMatch && token.match.equals(match)) {
+					if (Arrays.asList(plusPlusTokens).contains(token) && !EXPERIMENTAL) {
+						throw new Report.Error(
+							new Location(row, col), 
+							String.format("[%s] To use this feature you need to compile with '--experimental' flag", token.str()));
+					}
+					return token;
+				}
+
 				if (!fullMatch && token.match.substring(0, Math.min(token.match.length(), matchLength)).equals(match)) {
+					if (Arrays.asList(plusPlusTokens).contains(token) && !EXPERIMENTAL) {
+						throw new Report.Error(
+							new Location(row, col), 
+							String.format("[%s] To use this feature you need to compile with '--experimental' flag", token.str()));
+					}
 					return token;
 				}
 
