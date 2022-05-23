@@ -1,4 +1,4 @@
-import std;
+fun putChar(c : char) : void = none;
 
 var ptr: ^int;
 var address: int;

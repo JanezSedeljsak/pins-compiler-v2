@@ -1,5 +1,3 @@
-import std;
-
 var x: int;
 var memo: ^int;
 

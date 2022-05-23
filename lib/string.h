@@ -2,9 +2,10 @@ typ string = ^char;
 
 #{ ugliest string constructor ever but it works }#
 fun make_string(c0: char, c1: char, c2: char, c3: char, c4: char, c5: char, c6: char, c7: char, c8: char, c9: char,
-                c10: char, c11: char, c12: char, c13: char, c14: char, c15: char, c16: char, c17: char, c18: char, c19: char): string = ({
+                c10: char, c11: char, c12: char, c13: char, c14: char, c15: char, c16: char, c17: char, c18: char, c19: char,
+                c20: char, c21: char, c22: char, c23: char, c24: char, c25: char, c26: char, c27: char, c28: char, c29: char): string = ({
 
-    ptr = new 160;
+    ptr = new 240;
     ptr^ = c0;
     (((ptr : int) + 1*8): ^char)^ = c1;
     (((ptr : int) + 2*8): ^char)^ = c2;
@@ -25,6 +26,16 @@ fun make_string(c0: char, c1: char, c2: char, c3: char, c4: char, c5: char, c6: 
     (((ptr : int) + 17*8): ^char)^ = c17;
     (((ptr : int) + 18*8): ^char)^ = c18;
     (((ptr : int) + 19*8): ^char)^ = c19;
+    (((ptr : int) + 20*8): ^char)^ = c20;
+    (((ptr : int) + 21*8): ^char)^ = c21;
+    (((ptr : int) + 22*8): ^char)^ = c22;
+    (((ptr : int) + 23*8): ^char)^ = c23;
+    (((ptr : int) + 24*8): ^char)^ = c24;
+    (((ptr : int) + 25*8): ^char)^ = c25;
+    (((ptr : int) + 26*8): ^char)^ = c26;
+    (((ptr : int) + 27*8): ^char)^ = c27;
+    (((ptr : int) + 28*8): ^char)^ = c28;
+    (((ptr : int) + 29*8): ^char)^ = c29;
 
     ptr;
 
@@ -37,7 +48,7 @@ fun getString(): string = ({
     index = 0;
     c = getChar();
 
-    while index < 19 & c != (10: char) do
+    while index < 29 & c != (10: char) do
         str_adr(ptr, index)^ = c;
         c = getChar();
         index = index + 1;
@@ -59,14 +70,14 @@ fun concat(str1: string, str2: string): string = ({
     new_index = 0;
     index = 0;
 
-    while index < len1 & new_index < 19 do
+    while index < len1 & new_index < 29 do
         str_adr(ptr, new_index)^ = str_adr(str1, index)^;
         index = index + 1;
         new_index = new_index + 1;
     end;
 
     index = 0;
-    while index < len2 & new_index < 19 do
+    while index < len2 & new_index < 29 do
         str_adr(ptr, new_index)^ = str_adr(str2, index)^;
         index = index + 1;
         new_index = new_index + 1;
@@ -83,26 +94,28 @@ fun concat(str1: string, str2: string): string = ({
     var len2: int;
 );
 
-fun writeString(str: string): void = ({
+fun putString(str: string): void = ({
     index = 0;
     temp = str^;
-    while temp != (10: char) & index < 20 do
+    while temp != (10: char) & index < 30 do
         putChar(temp);
         index = index + 1;
         temp = (((str : int) + index*8): ^char)^;
     end;
-
-    endl();
-
 } where
     var index: int;
     var temp: char;
 );
 
+fun writeString(str: string): void = {
+    putString(str);
+    endl();
+};
+
 fun log_str(str: string): void = ({
     index = 0;
     temp = str^;
-    while index < 20 do
+    while index < 30 do
         putInt((temp: int));
         putChar(' ');
         index = index + 1;
@@ -119,7 +132,7 @@ fun log_str(str: string): void = ({
 fun len(str: string): int = ({
     index = 0;
     temp = str^;
-    while temp != (10: char) & index < 20 do
+    while temp != (10: char) & index < 30 do
         index = index + 1;
         temp = (((str : int) + index*8): ^char)^;
     end;

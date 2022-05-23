@@ -1,5 +1,7 @@
 package pins.data.symbol;
 
+import java.util.Arrays;
+
 import pins.common.report.*;
 
 public enum Token {
@@ -24,8 +26,11 @@ public enum Token {
 	
 	/* math */
 	MULTIPLY("*"), DIVIDE("/"), MOD("%"), PLUS("+"),
-	MINUS("-"), POINTER("^"), ASSIGN("="), IMPORT("import"),
-
+	MINUS("-"), POINTER("^"), ASSIGN("="), 
+	
+	/** pins++ features */
+	IMPORT("import"),
+	FOR("for"),
 	STRING_LITERAL("\"[^\"\\\\]*(\\\\.[^\"\\\\]*)*\"?", true),
 
 	IDENTIFIER("[A-Za-z_][A-Za-z0-9_]*", true);
@@ -33,6 +38,9 @@ public enum Token {
 	private String match;
 	private boolean isRegex;
 	private static char FIRST_PRINTABLE = ' ', LAST_PRINTABLE = '~'; // 32, 126
+	
+	public static boolean EXPERIMENTAL = false;
+	private static Token[] plusPlusTokens = new Token[] {IMPORT, FOR, STRING_LITERAL};
 
 	Token() {
 		this.match = null;
@@ -111,6 +119,12 @@ public enum Token {
 
 		for (Token token: Token.values()) {
 			if (token.match == null) continue;
+
+			if (Arrays.asList(plusPlusTokens).contains(token) && !EXPERIMENTAL) {
+				throw new Report.Error(
+					new Location(row, col), 
+					String.format("[%s] To use this feature you need to compile with '--experimental' flag", token.str()));
+			}
 			
 			if (!token.isRegex) {
 				if (fullMatch && token.match.equals(match)) return token;

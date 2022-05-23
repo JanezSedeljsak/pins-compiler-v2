@@ -3,6 +3,7 @@ package pins;
 import java.util.*;
 import pins.common.report.*;
 import pins.data.ast.*;
+import pins.data.symbol.Token;
 import pins.phase.lexan.*;
 import pins.phase.synan.*;
 import pins.phase.seman.*;
@@ -25,11 +26,19 @@ public class Compiler {
 
 		try {
 			Report.info("This is the PINS'22 compiler:");
+			Token.EXPERIMENTAL = false;
 
 			// Scan the command line.
 			for (int argc = 0; argc < args.length; argc++) {
 				if (args[argc].startsWith("--")) {
 					// Command-line switch.
+					if (args[argc].matches("--experimental")) {
+						Token.EXPERIMENTAL = args[argc].equals("--experimental");
+						if (cmdLine.get("--experimental") == null) {
+							cmdLine.put("--experimental", args[argc]);
+							continue;
+						}
+					}
 					if (args[argc].matches("--src-file-name=.*")) {
 						if (cmdLine.get("--src-file-name") == null) {
 							cmdLine.put("--src-file-name", args[argc]);

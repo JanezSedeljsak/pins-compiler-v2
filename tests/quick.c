@@ -80,5 +80,4 @@ fun main() : void = {
 fun putChar(c : char) : void = none;
 fun getChar() : char = (0 : char);
 fun putInt(i : int) : void = none;
-fun getInt() : int = 0;
 fun random(min : int, max : int) : int = 0;

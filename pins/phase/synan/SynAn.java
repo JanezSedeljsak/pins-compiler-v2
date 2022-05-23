@@ -567,6 +567,37 @@ public class SynAn implements AutoCloseable {
 				checkExpected(Token.SEMICOLON);
 				parentNode.add(new AstWhileStmt(fromTo(loc), expr, bodyStmt));
 				break;
+			case FOR:
+				AstExpr firstAssign, condition, secondAssign;
+				AstStmt secondAssignStmt;
+				/* assign */
+				firstAssign = parseExpr();
+				parentNode.add(parseOptionalAssign(firstAssign));
+
+				/* condition */
+				condition = parseExpr();
+				checkExpected(Token.SEMICOLON);
+				
+				/* new assign this has to be added into bodyStmt */
+				secondAssign = parseExpr();
+				secondAssignStmt = parseOptionalAssign(secondAssign);
+				checkExpected(Token.DO);
+
+				innerLoc = peek().location;
+				stmtList = parseListOfStmts();
+
+				ASTs<AstStmt> bodyStmts = stmtList.stmts;
+				Vector<AstStmt> stmtVector = bodyStmts.asts();
+				stmtVector.add(secondAssignStmt);
+				AstStmtExpr stmtExpr = new AstStmtExpr(fromTo(innerLoc), new ASTs<AstStmt>(null, stmtVector));
+
+				bodyStmt = new AstExprStmt(fromTo(innerLoc), stmtExpr);
+				checkExpected(Token.END);
+				checkExpected(Token.SEMICOLON);
+
+
+				parentNode.add(new AstWhileStmt(fromTo(loc), condition, bodyStmt));
+				break;
 			default:
 				dontMove = true;
 				expr = parseExpr();
@@ -605,20 +636,13 @@ public class SynAn implements AutoCloseable {
 					String str = peek().lexeme();
 					str = str.substring(1, str.length() - 1); // remove first and last char
 
-					int i = 0;
-					for (i = 0; i < str.length() && i < 19; i++) {
+					for (int i = 0; i < str.length() && i < 29; i++) {
 						argsVector.add(new AstConstExpr(peek().location, AstConstExpr.Kind.CHAR, String.format("\'%s\'", str.charAt(i))));
 					}
 
-					i++;
-					if (i == 19) {
-						argsVector.add(new AstConstExpr(peek().location, AstConstExpr.Kind.CHAR, String.format("\'%s\'", (char)10)));
-					} else {
-						argsVector.add(new AstConstExpr(peek().location, AstConstExpr.Kind.CHAR, String.format("\'%s\'", (char)10)));
-						for (; i < 20; i++) {
-							argsVector.add(new AstConstExpr(peek().location, AstConstExpr.Kind.CHAR, "\' \'"));
-						}
-						
+					argsVector.add(new AstConstExpr(peek().location, AstConstExpr.Kind.CHAR, String.format("\'%s\'", (char)10)));
+					while (argsVector.size() < 30) {
+						argsVector.add(new AstConstExpr(peek().location, AstConstExpr.Kind.CHAR, "\' \'"));
 					}
 
 					ASTs<AstExpr> args = new ASTs<>(null, argsVector);
