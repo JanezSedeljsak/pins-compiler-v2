@@ -7,7 +7,7 @@
             "request": "launch",
             "mainClass": "pins/pins.Compiler",
             "projectName": "src_fc0e0df4",
-            "args": "./tests/nesting.c --experimental"
+            "args": "./tests/plus/avg.c --experimental"
         }
     ]
 }
